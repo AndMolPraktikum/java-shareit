@@ -60,7 +60,7 @@ public class ItemRepositoryInMemory implements ItemRepository {
     @Override
     public Item updateItem(long userId, Item item) {
         List<Item> userItems = items.get(userId);
-        userItems.removeIf(i -> i.getId() == (item.getId()));
+        userItems.removeIf(i -> i.getId().equals(item.getId()));
         userItems.add(item);
 
         return get(item.getId());
