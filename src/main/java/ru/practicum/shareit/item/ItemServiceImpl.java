@@ -34,7 +34,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<Item> searchItemByText(String text) {
-        if (text.length() == 0) {
+        if (text.length() == 0 || text.isBlank()) {
             return Collections.emptyList();
         }
         List<Item> allItems = itemRepository.getAllItems();
