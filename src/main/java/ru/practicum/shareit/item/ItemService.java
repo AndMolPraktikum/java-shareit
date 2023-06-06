@@ -1,13 +1,14 @@
 package ru.practicum.shareit.item;
 
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.item.model.ItemWithBooking;
 
 import java.util.List;
 
 public interface ItemService {
-    Item getItemById(long itemId);
+    ItemWithBooking getItemByIdForAll(long itemId, long userId);
 
-    List<Item> getAllUserItems(Long userId);
+    List<ItemWithBooking> getAllUserItems(Long userId);
 
     List<Item> searchItemByText(String text);
 
@@ -16,4 +17,8 @@ public interface ItemService {
     Item updateItem(long userId, long itemId, Item item);
 
     void deleteItem(long userId, long itemId);
+
+    Item checkUserItem(long ownerId, long itemId);
+
+    Item getItemById(long itemId);
 }

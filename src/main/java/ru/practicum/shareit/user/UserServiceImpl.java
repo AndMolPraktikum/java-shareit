@@ -4,13 +4,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.exception.UserAlreadyExistException;
+import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.shareit.exception.UserNotFoundException;
 import ru.practicum.shareit.user.model.User;
 
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Slf4j
 public class UserServiceImpl implements UserService {
@@ -25,40 +27,37 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getUserById(Long userId) {
-        return userRepository.get(userId);
+        Optional<User> userOptional = userRepository.findById(userId);
+        if (userOptional.isEmpty()) {
+            log.error("Пользователь с ID {} не существует", userId);
+            throw new UserNotFoundException(String.format("Пользователь с ID %d не существует", userId));
+        }
+        return userOptional.get();
     }
 
+    @Transactional
     @Override
     public User createUser(User user) {
-        checkEmail(user.getEmail());
-        return userRepository.create(user);
+        return userRepository.save(user);
     }
 
+    @Transactional
     @Override
     public User updateUser(long userId, User updateUser) {
         User user = getUserById(userId);
         if (updateUser.getName() != null) {
             user.setName(updateUser.getName());
         }
-        if (updateUser.getEmail() != null && !user.getEmail().equals(updateUser.getEmail())) {
-            checkEmail(updateUser.getEmail());
+        if (updateUser.getEmail() != null) {
             user.setEmail(updateUser.getEmail());
         }
-        return userRepository.update(userId, user);
+        updateUser.setId(userId);
+        return userRepository.save(user);
     }
 
+    @Transactional
     @Override
     public void deleteUser(long userId) {
-        userRepository.delete(userId);
-    }
-
-    private void checkEmail(String email) {
-        List<User> users = getAllUsers().stream()
-                .filter(u -> u.getEmail().equals(email))
-                .collect(Collectors.toList());
-        if (users.size() != 0) {
-            log.error("Пользователь с Email {} уже существует", email);
-            throw new UserAlreadyExistException(String.format("Пользователь с ID %s уже существует", email));
-        }
+        userRepository.deleteById(userId);
     }
 }

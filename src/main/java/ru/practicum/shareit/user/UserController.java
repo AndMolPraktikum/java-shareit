@@ -2,8 +2,10 @@ package ru.practicum.shareit.user;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.shareit.config.MapperUtil;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.model.User;
 
@@ -19,11 +21,14 @@ public class UserController {
     @Autowired
     private final UserService userService;
 
+    @Autowired
+    private ModelMapper modelMapper;
+
     @GetMapping
     public List<UserDto> getAllUsers() {
         log.info("Входящий запрос GET /users.");
-        List<User> allUsers = userService.getAllUsers();
-        List<UserDto> allUsersDto = UserMapper.toDtoList(allUsers);
+        final List<User> allUsers = userService.getAllUsers();
+        final List<UserDto> allUsersDto = MapperUtil.convertList(allUsers, this::convertToUserDto);
         log.info("Исходящий ответ: {}", allUsersDto);
         return allUsersDto;
     }
@@ -31,8 +36,8 @@ public class UserController {
     @GetMapping("/{id}")
     public UserDto findUserById(@PathVariable Long id) {
         log.info("Входящий запрос GET /users/{}.", id);
-        User userById = userService.getUserById(id);
-        UserDto userByIdDto = UserMapper.toDto(userById);
+        final User userById = userService.getUserById(id);
+        final UserDto userByIdDto = modelMapper.map(userById, UserDto.class);
         log.info("Исходящий ответ: {}", userByIdDto);
         return userByIdDto;
     }
@@ -40,8 +45,8 @@ public class UserController {
     @PostMapping
     public UserDto create(@Valid @RequestBody UserDto userDto) {
         log.info("Входящий запрос POST /users: {}", userDto);
-        User createdUser = userService.createUser(UserMapper.toEntity(userDto));
-        UserDto createdUserDto = UserMapper.toDto(createdUser);
+        final User createdUser = userService.createUser(modelMapper.map(userDto, User.class));
+        final UserDto createdUserDto = modelMapper.map(createdUser, UserDto.class);
         log.info("Исходящий ответ: {}", createdUserDto);
         return createdUserDto;
     }
@@ -49,8 +54,8 @@ public class UserController {
     @PatchMapping("/{id}")
     public UserDto update(@RequestBody UserDto userDto, @PathVariable Long id) {
         log.info("Входящий запрос PUT /users: {}", userDto);
-        User updatedUser = userService.updateUser(id, UserMapper.toEntity(userDto));
-        UserDto updatedUserDto = UserMapper.toDto(updatedUser);
+        final User updatedUser = userService.updateUser(id, modelMapper.map(userDto, User.class));
+        final UserDto updatedUserDto = modelMapper.map(updatedUser, UserDto.class);
         log.info("Исходящий ответ: {}", updatedUserDto);
         return updatedUserDto;
     }
@@ -61,4 +66,7 @@ public class UserController {
         userService.deleteUser(userId);
     }
 
+    private UserDto convertToUserDto(User user) {
+        return modelMapper.map(user, UserDto.class);
+    }
 }

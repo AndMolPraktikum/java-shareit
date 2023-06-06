@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.practicum.shareit.request.ItemRequest;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -14,14 +15,18 @@ import javax.validation.constraints.NotNull;
 public class ItemDto {
 
     private Long id;
+
     @NotBlank
     private String name;
+
     @NotBlank
     private String description;
+
     @NotNull
     private Boolean available;
+
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    private Long requestId;
+    private ItemRequest request;
 
     public ItemDto(String name, String description, Boolean available) {
         this.name = name;
