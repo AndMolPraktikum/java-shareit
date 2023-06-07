@@ -32,7 +32,4 @@ public class Item {
     @ToString.Exclude
     private User owner;
 
-//    @Column(name="request_id")
-//    private ItemRequest request;
-
 }
