@@ -18,8 +18,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("SELECT b FROM Booking b WHERE b.booker.id = ?1 AND b.end < CURRENT_TIMESTAMP ORDER BY b.start DESC")
     List<Booking> findByBookerIdPast(long bookerId);
 
-    @Query("SELECT b FROM Booking b WHERE b.booker.id = ?1 AND start > ?2 ORDER BY b.start DESC")
-    List<Booking> findByBookerIdFuture(long bookerId, LocalDateTime localDateTime);
+    @Query("SELECT b FROM Booking b WHERE b.booker.id = ?1 AND start > CURRENT_TIMESTAMP ORDER BY b.start DESC")
+    List<Booking> findByBookerIdFuture(long bookerId);
 
     @Query("SELECT b FROM Booking b WHERE b.booker.id = ?1 AND b.status = 'WAITING' ORDER BY b.start DESC")
     List<Booking> findByBookerIdWaiting(long bookerId);
@@ -34,8 +34,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("SELECT b FROM Booking b WHERE b.item.owner.id = ?1 AND b.end < CURRENT_TIMESTAMP ORDER BY b.start DESC")
     List<Booking> findByOwnerIdPast(long ownerId);
 
-    @Query("SELECT b FROM Booking b WHERE b.item.owner.id = ?1 AND start > ?2 ORDER BY b.start DESC")
-    List<Booking> findByOwnerIdFuture(long ownerId, LocalDateTime localDateTime);
+    @Query("SELECT b FROM Booking b WHERE b.item.owner.id = ?1 AND start > CURRENT_TIMESTAMP ORDER BY b.start DESC")
+    List<Booking> findByOwnerIdFuture(long ownerId);
 
     @Query("SELECT b FROM Booking b WHERE b.item.owner.id = ?1 AND b.status = 'WAITING' ORDER BY b.start DESC")
     List<Booking> findByOwnerIdWaiting(long ownerId);
@@ -54,4 +54,12 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @Query("SELECT b FROM Booking b WHERE b.item.id = ?2 AND b.booker.id = ?1 AND b.end < CURRENT_TIMESTAMP")
     List<Booking> findAllByBookerIdAndItemIdAndAfterEnd(long bookerId, long itemId);
+
+    @Query("SELECT (count(b) > 0) " +
+            "FROM Booking b " +
+            "WHERE b.item.id = ?1 " +
+            "  AND b.status = 'APPROVED' " +
+            "  AND b.start <= ?3 " +
+            "  AND b.end >= ?2")
+    boolean isAvailableForBooking(Long itemId, LocalDateTime start, LocalDateTime end);
 }

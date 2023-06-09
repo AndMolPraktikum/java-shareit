@@ -7,16 +7,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.comments.dto.CommentDto;
 import ru.practicum.shareit.comments.model.Comment;
 import ru.practicum.shareit.exception.NoCompletedBookingsException;
 import ru.practicum.shareit.item.ItemService;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.mapper.CommentMapper;
 import ru.practicum.shareit.user.UserService;
 import ru.practicum.shareit.user.model.User;
 
 import java.util.List;
 
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Slf4j
 public class CommentServiceImpl implements CommentService {
@@ -33,16 +36,18 @@ public class CommentServiceImpl implements CommentService {
     @Autowired
     private final BookingRepository bookingRepository;
 
+
     @Transactional
     @Override
-    public Comment create(long itemId, long userId, Comment comment) {
+    public CommentDto create(long itemId, long userId, CommentDto commentDto) {
+        Comment comment = CommentMapper.toCommentEntity(commentDto);
         User author = userService.getUserById(userId);
         Item item = itemService.getItemById(itemId);
 
         checkBookingItem(itemId, userId);
         comment.setAuthor(author);
         comment.setItem(item);
-        return commentRepository.save(comment);
+        return CommentMapper.toCommentDto(commentRepository.save(comment));
     }
 
     private void checkBookingItem(long itemId, long userId) {

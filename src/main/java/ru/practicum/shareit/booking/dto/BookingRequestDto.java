@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class BookingRawDto {
+public class BookingRequestDto {
 
     @NotNull
     private long itemId;

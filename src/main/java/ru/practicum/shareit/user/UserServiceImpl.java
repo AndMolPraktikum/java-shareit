@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.UserNotFoundException;
+import ru.practicum.shareit.mapper.UserMapper;
+import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.model.User;
 
 import java.util.List;
@@ -21,8 +23,8 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
 
     @Override
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserDto> getAllUsersDto() {
+        return UserMapper.toUserDtoList(userRepository.findAll());
     }
 
     @Override
@@ -35,24 +37,29 @@ public class UserServiceImpl implements UserService {
         return userOptional.get();
     }
 
-    @Transactional
     @Override
-    public User createUser(User user) {
-        return userRepository.save(user);
+    public UserDto getUserDtoById(Long userId) {
+        return UserMapper.toUserDto(getUserById(userId));
     }
 
     @Transactional
     @Override
-    public User updateUser(long userId, User updateUser) {
+    public UserDto createUser(UserDto userDto) {
+        User user = UserMapper.toUserEntity(userDto);
+        return UserMapper.toUserDto(userRepository.save(user));
+    }
+
+    @Transactional
+    @Override
+    public UserDto updateUser(long userId, UserDto updateUserDto) {
         User user = getUserById(userId);
-        if (updateUser.getName() != null) {
-            user.setName(updateUser.getName());
+        if (updateUserDto.getName() != null) {
+            user.setName(updateUserDto.getName());
         }
-        if (updateUser.getEmail() != null) {
-            user.setEmail(updateUser.getEmail());
+        if (updateUserDto.getEmail() != null) {
+            user.setEmail(updateUserDto.getEmail());
         }
-        updateUser.setId(userId);
-        return userRepository.save(user);
+        return UserMapper.toUserDto(userRepository.save(user));
     }
 
     @Transactional

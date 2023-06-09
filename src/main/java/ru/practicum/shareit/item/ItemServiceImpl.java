@@ -2,7 +2,6 @@ package ru.practicum.shareit.item;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,23 +10,22 @@ import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.comments.CommentRepository;
 import ru.practicum.shareit.exception.ItemNotFoundException;
 import ru.practicum.shareit.exception.UserHaveNoSuchItemException;
+import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemWithBookingDto;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.model.ItemWithBooking;
+import ru.practicum.shareit.mapper.ItemMapper;
 import ru.practicum.shareit.user.UserService;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Slf4j
 public class ItemServiceImpl implements ItemService {
-
-    @Autowired
-    private ModelMapper modelMapper;
 
     @Autowired
     private final UserService userService;
@@ -41,48 +39,47 @@ public class ItemServiceImpl implements ItemService {
     @Autowired
     private final CommentRepository commentRepository;
 
-    @Transactional
     @Override
-    public ItemWithBooking getItemByIdForAll(long itemId, long userId) {
+    public ItemWithBookingDto getItemDtoByIdForAll(long itemId, long userId) {
         Item item = getItemById(itemId);
-        ItemWithBooking itemWithBooking = modelMapper.map(item, ItemWithBooking.class);
+        ItemWithBooking itemWithBooking = ItemMapper.toItemWithBooking(item);
         if (item.getOwner() != null && item.getOwner().getId() == userId) {
             setBookings(itemWithBooking);
         }
         itemWithBooking.setComments(commentRepository.findAllByItemId(itemId));
-        return itemWithBooking;
+        return ItemMapper.toItemWithBookingDto(itemWithBooking);
     }
 
     @Override
-    public List<ItemWithBooking> getAllUserItems(Long userId) {
+    public List<ItemWithBookingDto> getAllUserItemsDto(Long userId) {
         List<Item> items = itemRepository.findAllByOwnerIdOrderByIdAsc(userId);
-        List<ItemWithBooking> itemsWithBooking = items.stream()
-                .map(item -> modelMapper.map(item, ItemWithBooking.class))
-                .collect(Collectors.toList());
-        itemsWithBooking.forEach(this::setBookings);
-
-        return itemsWithBooking;
+        List<ItemWithBooking> itemsWithBookingList = ItemMapper.toItemWithBookingList(items);
+        itemsWithBookingList.forEach(this::setBookings);
+        return ItemMapper.toItemWithBookingDtoList(itemsWithBookingList);
     }
 
     @Override
-    public List<Item> searchItemByText(String text) {
+    public List<ItemDto> searchItemDtoByText(String text) {
         if (text.length() == 0 || text.isBlank()) {
             return Collections.emptyList();
         }
-        return itemRepository.findByNameContainingOrDescriptionContaining(text.toUpperCase());
+        List<Item> items = itemRepository.findByNameContainingOrDescriptionContaining(text.toUpperCase());
+        return ItemMapper.toItemDtoList(items);
     }
 
     @Transactional
     @Override
-    public Item createItem(Long userId, Item item) {
+    public ItemDto createItem(Long userId, ItemDto itemDto) {
+        Item item = ItemMapper.toEntity(itemDto);
         item.setOwner(userService.getUserById(userId));
-        return itemRepository.save(item);
+        return ItemMapper.toItemDto(itemRepository.save(item));
     }
 
     @Transactional
     @Override
-    public Item updateItem(long userId, long itemId, Item updateItem) {
-        userService.getUserById(userId);
+    public ItemDto updateItem(long userId, long itemId, ItemDto updateItemDto) {
+        Item updateItem = ItemMapper.toEntity(updateItemDto);
+        userService.getUserDtoById(userId);
         Item item = checkUserItem(userId, itemId);
         if (updateItem.getName() != null) {
             item.setName(updateItem.getName());
@@ -93,7 +90,7 @@ public class ItemServiceImpl implements ItemService {
         if (updateItem.getAvailable() != null) {
             item.setAvailable(updateItem.getAvailable());
         }
-        return itemRepository.save(item);
+        return ItemMapper.toItemDto(itemRepository.save(item));
     }
 
     @Transactional
@@ -112,6 +109,11 @@ public class ItemServiceImpl implements ItemService {
                     String.format("Пользователь с ID: %d не является владельцем вещи с ID: %d", userId, itemId));
         }
         return item;
+    }
+
+    @Override
+    public ItemDto getItemDtoById(long itemId) { //#Done
+        return ItemMapper.toItemDto(getItemById(itemId));
     }
 
     @Override

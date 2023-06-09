@@ -1,10 +1,8 @@
 package ru.practicum.shareit.item.dto;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.practicum.shareit.request.ItemRequest;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -24,9 +22,6 @@ public class ItemDto {
 
     @NotNull
     private Boolean available;
-
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    private ItemRequest request;
 
     public ItemDto(String name, String description, Boolean available) {
         this.name = name;

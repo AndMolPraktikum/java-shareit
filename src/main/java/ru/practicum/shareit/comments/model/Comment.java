@@ -27,12 +27,18 @@ public class Comment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @ToString.Exclude
+    @JoinColumn(name = "item_id")
     private Item item;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @ToString.Exclude
+    @JoinColumn(name = "author_id")
     private User author;
 
     @CreationTimestamp
     private LocalDateTime created;
+
+    public Comment(String text) {
+        this.text = text;
+    }
 }
