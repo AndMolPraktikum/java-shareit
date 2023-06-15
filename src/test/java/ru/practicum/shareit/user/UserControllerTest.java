@@ -88,7 +88,7 @@ class UserControllerTest {
         mockMvc.perform(post("/users")
                         .content(objectMapper.writeValueAsString(userDto2))
                         .contentType("application/json"))
-                .andExpect(status().isConflict());
+                .andExpect(status().isInternalServerError());
     }
 
     @Test

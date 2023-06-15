@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.user.dto.UserDto;
-import ru.practicum.shareit.user.model.User;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -22,8 +21,7 @@ public class UserController {
     @GetMapping
     public List<UserDto> getAllUsers() {
         log.info("Входящий запрос GET /users.");
-        List<User> allUsers = userService.getAllUsers();
-        List<UserDto> allUsersDto = UserMapper.toDtoList(allUsers);
+        final List<UserDto> allUsersDto = userService.getAllUsersDto();
         log.info("Исходящий ответ: {}", allUsersDto);
         return allUsersDto;
     }
@@ -31,8 +29,7 @@ public class UserController {
     @GetMapping("/{id}")
     public UserDto findUserById(@PathVariable Long id) {
         log.info("Входящий запрос GET /users/{}.", id);
-        User userById = userService.getUserById(id);
-        UserDto userByIdDto = UserMapper.toDto(userById);
+        final UserDto userByIdDto = userService.getUserDtoById(id);
         log.info("Исходящий ответ: {}", userByIdDto);
         return userByIdDto;
     }
@@ -40,8 +37,7 @@ public class UserController {
     @PostMapping
     public UserDto create(@Valid @RequestBody UserDto userDto) {
         log.info("Входящий запрос POST /users: {}", userDto);
-        User createdUser = userService.createUser(UserMapper.toEntity(userDto));
-        UserDto createdUserDto = UserMapper.toDto(createdUser);
+        final UserDto createdUserDto = userService.createUser(userDto);
         log.info("Исходящий ответ: {}", createdUserDto);
         return createdUserDto;
     }
@@ -49,8 +45,7 @@ public class UserController {
     @PatchMapping("/{id}")
     public UserDto update(@RequestBody UserDto userDto, @PathVariable Long id) {
         log.info("Входящий запрос PUT /users: {}", userDto);
-        User updatedUser = userService.updateUser(id, UserMapper.toEntity(userDto));
-        UserDto updatedUserDto = UserMapper.toDto(updatedUser);
+        final UserDto updatedUserDto = userService.updateUser(id, userDto);
         log.info("Исходящий ответ: {}", updatedUserDto);
         return updatedUserDto;
     }
@@ -60,5 +55,4 @@ public class UserController {
         log.info("Входящий запрос DELETE /users/{}", userId);
         userService.deleteUser(userId);
     }
-
 }

@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import javax.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
 
 @Slf4j
@@ -14,15 +15,38 @@ import java.time.LocalDateTime;
 public class ErrorHandler {
 
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public Response handleThrowable(final Throwable e) {
-        log.info("500 {}", e.getMessage(), e);
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Response handleMethodArgumentNotValidException(final MethodArgumentNotValidException e) {
+        log.info("400 {}", e.getMessage(), e);
+        return new Response(String.format("%s %s", LocalDateTime.now(), e.getMessage()));
+    }
+
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Response handleItemIsUnavailableException(final ItemIsUnavailableException e) {
+        log.info("400 {}", e.getMessage(), e);
         return new Response(String.format("%s %s", LocalDateTime.now(), e.getMessage()));
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Response handleMethodArgumentNotValidException(final MethodArgumentNotValidException e) {
+    public Response handleBookingWrongTimeException(final BookingWrongTimeException e) {
+        log.info("400 {}", e.getMessage(), e);
+        return new Response(String.format("%s %s", LocalDateTime.now(), e.getMessage()));
+    }
+
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Response handleBookingAlreadyVerifiedByOwnerException(final BookingAlreadyVerifiedByOwnerException e) {
+        log.info("400 {}", e.getMessage(), e);
+        return new Response(String.format("%s %s", LocalDateTime.now(), e.getMessage()));
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Response handleNoCompletedBookingsException(final NoCompletedBookingsException e) {
         log.info("400 {}", e.getMessage(), e);
         return new Response(String.format("%s %s", LocalDateTime.now(), e.getMessage()));
     }
@@ -42,16 +66,53 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Response handleItemNotFoundException(final ItemNotFoundException e) {
+        log.info("404 {}", e.getMessage(), e);
+        return new Response(String.format("%s %s", LocalDateTime.now(), e.getMessage()));
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Response handleBookingNotFoundException(final BookingNotFoundException e) {
+        log.info("404 {}", e.getMessage(), e);
+        return new Response(String.format("%s %s", LocalDateTime.now(), e.getMessage()));
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Response handleUserHasNoLinkBookingOrItemException(final UserHasNoLinkBookingOrItemException e) {
+        log.info("404 {}", e.getMessage(), e);
+        return new Response(String.format("%s %s", LocalDateTime.now(), e.getMessage()));
+    }
+
+    @ExceptionHandler
     @ResponseStatus(HttpStatus.CONFLICT)
     public Response handleUserAlreadyExistException(final UserAlreadyExistException e) {
         log.info("409 {}", e.getMessage(), e);
         return new Response(String.format("%s %s", LocalDateTime.now(), e.getMessage()));
     }
 
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Response handleItemNotFoundException(final ItemNotFoundException e) {
-        log.info("404 {}", e.getMessage(), e);
+    @ExceptionHandler({ConstraintViolationException.class})
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public Response handleConstraintViolationException(final ConstraintViolationException e) {
+        log.info("409 {}", e.getMessage(), e);
         return new Response(String.format("%s %s", LocalDateTime.now(), e.getMessage()));
     }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorMessage handleFailStateException(final FailStateException e) {
+        log.info("500 {}", e.getMessage(), e);
+        return new ErrorMessage(String.format("%s", e.getMessage()));
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public Response handleThrowable(final Throwable e) {
+        log.info("500 {}", e.getMessage(), e);
+        return new Response(String.format("%s %s", LocalDateTime.now(), e.getMessage()));
+    }
+
+
 }

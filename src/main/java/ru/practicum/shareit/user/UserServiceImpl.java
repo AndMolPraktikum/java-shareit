@@ -4,13 +4,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.exception.UserAlreadyExistException;
+import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.shareit.exception.UserNotFoundException;
+import ru.practicum.shareit.mapper.UserMapper;
+import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.model.User;
 
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Slf4j
 public class UserServiceImpl implements UserService {
@@ -19,46 +23,48 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
 
     @Override
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserDto> getAllUsersDto() {
+        return UserMapper.toUserDtoList(userRepository.findAll());
     }
 
     @Override
     public User getUserById(Long userId) {
-        return userRepository.get(userId);
+        Optional<User> userOptional = userRepository.findById(userId);
+        if (userOptional.isEmpty()) {
+            log.error("Пользователь с ID {} не существует", userId);
+            throw new UserNotFoundException(String.format("Пользователь с ID %d не существует", userId));
+        }
+        return userOptional.get();
     }
 
     @Override
-    public User createUser(User user) {
-        checkEmail(user.getEmail());
-        return userRepository.create(user);
+    public UserDto getUserDtoById(Long userId) {
+        return UserMapper.toUserDto(getUserById(userId));
     }
 
+    @Transactional
     @Override
-    public User updateUser(long userId, User updateUser) {
+    public UserDto createUser(UserDto userDto) {
+        User user = UserMapper.toUserEntity(userDto);
+        return UserMapper.toUserDto(userRepository.save(user));
+    }
+
+    @Transactional
+    @Override
+    public UserDto updateUser(long userId, UserDto updateUserDto) {
         User user = getUserById(userId);
-        if (updateUser.getName() != null) {
-            user.setName(updateUser.getName());
+        if (updateUserDto.getName() != null) {
+            user.setName(updateUserDto.getName());
         }
-        if (updateUser.getEmail() != null && !user.getEmail().equals(updateUser.getEmail())) {
-            checkEmail(updateUser.getEmail());
-            user.setEmail(updateUser.getEmail());
+        if (updateUserDto.getEmail() != null) {
+            user.setEmail(updateUserDto.getEmail());
         }
-        return userRepository.update(userId, user);
+        return UserMapper.toUserDto(userRepository.save(user));
     }
 
+    @Transactional
     @Override
     public void deleteUser(long userId) {
-        userRepository.delete(userId);
-    }
-
-    private void checkEmail(String email) {
-        List<User> users = getAllUsers().stream()
-                .filter(u -> u.getEmail().equals(email))
-                .collect(Collectors.toList());
-        if (users.size() != 0) {
-            log.error("Пользователь с Email {} уже существует", email);
-            throw new UserAlreadyExistException(String.format("Пользователь с ID %s уже существует", email));
-        }
+        userRepository.deleteById(userId);
     }
 }
