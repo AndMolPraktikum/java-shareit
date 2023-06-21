@@ -1,138 +1,80 @@
 package ru.practicum.shareit.user;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.web.servlet.MockMvc;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import ru.practicum.shareit.user.dto.UserDto;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import java.util.List;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
 class UserControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-    @Autowired
-    private ObjectMapper objectMapper;
+    @Mock
+    private UserService userService;
+
+    @InjectMocks
+    private UserController userController;
 
     @Test
-    void shouldReturnTwoUsers() throws Exception {
-        UserDto userDto = new UserDto("user1", "user1@user.com");
-        mockMvc.perform(post("/users")
-                        .content(objectMapper.writeValueAsString(userDto))
-                        .contentType("application/json"))
-                .andExpect(status().isOk());
+    void getAllUsers_whenInvoked_thenResponseContainsListOfUserDtos() {
+        List<UserDto> userList = List.of(new UserDto(), new UserDto());
+        when(userService.getAllUsersDto()).thenReturn(userList);
 
-        UserDto userDto2 = new UserDto("user2", "user2@user.com");
+        List<UserDto> responseList = userController.getAllUsers();
 
-        mockMvc.perform(post("/users")
-                        .content(objectMapper.writeValueAsString(userDto2))
-                        .contentType("application/json"))
-                .andExpect(status().isOk());
-
-        mockMvc.perform(get("/users"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType("application/json;charset=UTF-8"))
-                .andExpect(content().string(containsString("user1@user.com")))
-                .andExpect(content().string(containsString("user2@user.com")));
+        assertEquals(userList.size(), responseList.size());
+        verify(userService).getAllUsersDto();
     }
 
     @Test
-    void shouldReturnUser() throws Exception {
-        UserDto user3Dto = new UserDto("user3", "use3@user.com");
-        String response = mockMvc.perform(post("/users")
-                        .content(objectMapper.writeValueAsString(user3Dto))
-                        .contentType("application/json"))
-                .andExpect(status().isOk())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+    void findUserById_whenUserFound_thenResponseContainsUserDto() {
+        long userId = 1L;
+        UserDto userDto = new UserDto();
+        when(userService.getUserDtoById(userId)).thenReturn(userDto);
 
-        int id = Integer.parseInt(response.substring(6, 7));
+        UserDto response = userController.findUserById(userId);
 
-
-        mockMvc.perform(get("/users/{id}", id))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType("application/json;charset=UTF-8"))
-                .andExpect(jsonPath("$.id").value("" + id));
+        assertEquals(userDto, response);
+        verify(userService).getUserDtoById(userId);
     }
 
     @Test
-    void shouldCreateUser() throws Exception {
-        UserDto user4Dto = new UserDto("user4", "user4@user.com");
+    void create_whenInvoked_thenSaveUser() {
+        UserDto userDto = new UserDto();
+        when(userService.createUser(userDto)).thenReturn(userDto);
 
-        mockMvc.perform(post("/users")
-                        .content(objectMapper.writeValueAsString(user4Dto))
-                        .contentType("application/json"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType("application/json;charset=UTF-8"))
-                .andExpect(content().string(containsString("user4@user.com")));
+        UserDto response = userController.create(userDto);
+
+        assertEquals(userDto, response);
+        verify(userService).createUser(userDto);
     }
 
     @Test
-    void shouldNotCreateUserWithDuplicateEmail() throws Exception {
-        UserDto user5Dto = new UserDto("user5", "user5@user.com");
-        mockMvc.perform(post("/users")
-                        .content(objectMapper.writeValueAsString(user5Dto))
-                        .contentType("application/json"))
-                .andExpect(status().isOk());
+    void update_whenInvoked_thenUpdateUser() {
+        long userId = 1L;
+        UserDto updateUserDto = new UserDto("user100", "user100@yandex.ru");
+        UserDto updatedUserDto = new UserDto(1L, "user100", "user100@yandex.ru");
+        when(userService.updateUser(userId, updateUserDto)).thenReturn(updatedUserDto);
 
-        UserDto userDto2 = new UserDto("user", "user5@user.com");
+        UserDto response = userController.update(updateUserDto, userId);
 
-        mockMvc.perform(post("/users")
-                        .content(objectMapper.writeValueAsString(userDto2))
-                        .contentType("application/json"))
-                .andExpect(status().isInternalServerError());
+        assertEquals(updatedUserDto, response);
+        verify(userService).updateUser(userId, updateUserDto);
     }
 
     @Test
-    void shouldUpdateUser() throws Exception {
-        UserDto user6Dto = new UserDto("user6", "user6@user.com");
-        String response = mockMvc.perform(post("/users")
-                        .content(objectMapper.writeValueAsString(user6Dto))
-                        .contentType("application/json"))
-                .andExpect(status().isOk())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+    void delete_whenInvoked_thenDeleteUser() {
+        long userId = 1L;
 
-        int id = Integer.parseInt(response.substring(6, 7));
+        userController.delete(userId);
 
-        UserDto userDto = new UserDto("update6", "update6@user.com");
-
-        mockMvc.perform(patch("/users/{id}", id)
-                        .content(objectMapper.writeValueAsString(userDto))
-                        .contentType("application/json"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType("application/json;charset=UTF-8"))
-                .andExpect(jsonPath("$.id").value("" + id))
-                .andExpect(jsonPath("$.name").value("update6"))
-                .andExpect(jsonPath("$.email").value("update6@user.com"));
-    }
-
-    @Test
-    void shouldDeleteUser() throws Exception {
-        UserDto user7Dto = new UserDto("user7", "user7@user.com");
-        String response = mockMvc.perform(post("/users")
-                        .content(objectMapper.writeValueAsString(user7Dto))
-                        .contentType("application/json"))
-                .andExpect(status().isOk())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-        int id = Integer.parseInt(response.substring(6, 7));
-
-        mockMvc.perform(delete("/users/{id}", id))
-                .andExpect(status().isOk());
-
-        mockMvc.perform(get("/users/{id}", id))
-                .andExpect(status().isNotFound())
-                .andExpect(content().contentType("application/json;charset=UTF-8"));
+        verify(userService).deleteUser(userId);
     }
 }

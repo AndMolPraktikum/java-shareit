@@ -10,7 +10,7 @@ import javax.validation.constraints.NotNull;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ItemDto {
+public class ItemDtoIn {
 
     private Long id;
 
@@ -23,7 +23,16 @@ public class ItemDto {
     @NotNull
     private Boolean available;
 
-    public ItemDto(String name, String description, Boolean available) {
+    private Long requestId;
+
+    public ItemDtoIn(String name, String description, Boolean available) {
+        this.name = name;
+        this.description = description;
+        this.available = available;
+    }
+
+    public ItemDtoIn(Long id, String name, String description, Boolean available) {
+        this.id = id;
         this.name = name;
         this.description = description;
         this.available = available;

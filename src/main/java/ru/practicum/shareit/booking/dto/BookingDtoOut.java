@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.practicum.shareit.enums.BookingStatus;
-import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemDtoOut;
 import ru.practicum.shareit.user.dto.UserDto;
 
 import java.time.LocalDateTime;
@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class BookingResponseDto {
+public class BookingDtoOut {
 
     private long id;
 
@@ -20,7 +20,7 @@ public class BookingResponseDto {
 
     private LocalDateTime end;
 
-    private ItemDto item;
+    private ItemDtoOut item;
 
     private UserDto booker;
 
