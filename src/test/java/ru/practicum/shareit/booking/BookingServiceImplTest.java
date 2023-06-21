@@ -105,10 +105,11 @@ class BookingServiceImplTest {
 
     @Test
     void create_whenStartEqualsEnd_thenBookingWrongTimeExceptionThrown() {
+        LocalDateTime localDateTime = LocalDateTime.now();
         BookingDtoIn bookingDtoIn = new BookingDtoIn(
                 1L,
-                LocalDateTime.now().plusSeconds(1),
-                LocalDateTime.now().plusSeconds(1)
+                localDateTime.plusSeconds(1),
+                localDateTime.plusSeconds(1)
         );
         long bookerId = 1L;
         User user = new User(1L, "user", "user@yandex.ru");
