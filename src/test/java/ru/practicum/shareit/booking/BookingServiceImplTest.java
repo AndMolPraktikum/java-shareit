@@ -28,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
+import static ru.practicum.shareit.enums.BookingStatus.APPROVED;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -157,6 +158,32 @@ class BookingServiceImplTest {
     }
 
     @Test
+    void create_whenEndBeforeCurrentTime_thenBookingWrongTimeExceptionThrown() {
+        BookingDtoIn bookingDtoIn = new BookingDtoIn(
+                1L,
+                LocalDateTime.now().minusSeconds(1),
+                LocalDateTime.now().plusSeconds(1)
+        );
+        long bookerId = 1L;
+        User user = new User(1L, "user", "user@yandex.ru");
+        User user2 = new User(2L, "user2", "user2@yandex.ru");
+        Item item = new Item(1L, "Садовая тачка",
+                "Возит сама", true, user2, null);
+        String message = "Время начала или окончания бронирования не может быть раньше текущего времени";
+        when(userService.getUserById(bookerId)).thenReturn(user);
+        when(itemService.getItemById(bookingDtoIn.getItemId())).thenReturn(item);
+
+        BookingWrongTimeException response = assertThrows(BookingWrongTimeException.class,
+                () -> bookingService.create(bookingDtoIn, bookerId));
+
+        String responseMessage = response.getMessage();
+        assertEquals(message, responseMessage);
+        verify(userService).getUserById(bookerId);
+        verify(itemService).getItemById(bookingDtoIn.getItemId());
+        verify(bookingRepository, never()).save(any(Booking.class));
+    }
+
+    @Test
     void create_whenItemUnavailable_thenItemIsUnavailableExceptionThrown() {
         BookingDtoIn bookingDtoIn = new BookingDtoIn(
                 1L,
@@ -255,7 +282,7 @@ class BookingServiceImplTest {
                 new Item(1L, "Садовая тачка",
                         "Возит сама", true, owner, null),
                 new User(1L, "booker", "booker@yandex.ru"),
-                BookingStatus.APPROVED
+                APPROVED
         );
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
         when(itemService.checkUserItem(ownerId, booking.getItem().getId())).thenReturn(null);
@@ -318,7 +345,7 @@ class BookingServiceImplTest {
                 new Item(1L, "Садовая тачка",
                         "Возит сама", true, owner, null),
                 new User(1L, "booker", "booker@yandex.ru"),
-                BookingStatus.APPROVED
+                APPROVED
         );
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
 
@@ -327,7 +354,6 @@ class BookingServiceImplTest {
         verify(bookingRepository).findById(bookingId);
         verify(bookingRepository, never()).save(any(Booking.class));
     }
-
 
     @Test
     void getBookingByIdForOwnerOrAuthor_whenRequesterCorrect_thenResponseContainsBooking() {
@@ -341,7 +367,31 @@ class BookingServiceImplTest {
                 new Item(1L, "Садовая тачка",
                         "Возит сама", true, owner, null),
                 new User(1L, "booker", "booker@yandex.ru"),
-                BookingStatus.APPROVED
+                APPROVED
+        );
+        when(userService.getUserDtoById(userId)).thenReturn(null);
+        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(bookingOut));
+
+        BookingDtoOut response = bookingService.getBookingByIdForOwnerOrAuthor(bookingId, userId);
+
+        assertEquals(BookingMapper.toBookingResponseDto(bookingOut), response);
+        verify(bookingRepository).findById(bookingId);
+        verify(userService).getUserDtoById(userId);
+    }
+
+    @Test
+    void getBookingByIdForOwnerOrAuthor_whenRequesterCorrectAndUserIdEquals1_thenResponseContainsBooking() {
+        long bookingId = 1L;
+        long userId = 1L;
+        User owner = new User(2L, "owner", "owner@yandex.ru");
+        Booking bookingOut = new Booking(
+                1L,
+                LocalDateTime.now().plusSeconds(1),
+                LocalDateTime.now().plusSeconds(2),
+                new Item(1L, "Садовая тачка",
+                        "Возит сама", true, owner, null),
+                new User(1L, "booker", "booker@yandex.ru"),
+                APPROVED
         );
         when(userService.getUserDtoById(userId)).thenReturn(null);
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(bookingOut));
@@ -379,7 +429,7 @@ class BookingServiceImplTest {
                 new Item(1L, "Садовая тачка",
                         "Возит сама", true, owner, null),
                 new User(1L, "booker", "booker@yandex.ru"),
-                BookingStatus.APPROVED
+                APPROVED
         );
         when(userService.getUserDtoById(userId)).thenReturn(null);
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(bookingOut));
@@ -401,7 +451,7 @@ class BookingServiceImplTest {
                 new Item(1L, "Садовая тачка",
                         "Возит сама", true, new User(), null),
                 new User(1L, "booker", "booker@yandex.ru"),
-                BookingStatus.APPROVED
+                APPROVED
         );
         Booking booking2 = new Booking(
                 2L,
@@ -410,7 +460,7 @@ class BookingServiceImplTest {
                 new Item(1L, "Самокат",
                         "Сам едет", true, new User(), null),
                 new User(1L, "booker", "booker@yandex.ru"),
-                BookingStatus.APPROVED
+                APPROVED
         );
         List<Booking> bookingList = List.of(booking1, booking2);
         PageRequest page = PageRequest.of(brp.getFrom(), brp.getSize());
@@ -425,8 +475,178 @@ class BookingServiceImplTest {
     }
 
     @Test
+    void getAllUserBookings_whenStateCurrent_thenResponseContainsListOfBookings() {
+        LocalDateTime ldt = LocalDateTime.now();
+        User booker = new User(1L, "booker", "booker@yandex.ru");
+        Item item = new Item(1L, "Вещь", "Описание", true, new User(), null);
+        BookingRequestParams brp = new BookingRequestParams(States.CURRENT, 1L, 0, 5);
+        Booking booking1 = new Booking(
+                1L,
+                ldt.plusSeconds(1),
+                ldt.plusSeconds(2),
+                item,
+                booker,
+                APPROVED);
+        Booking booking2 = new Booking(
+                1L,
+                ldt.plusSeconds(3),
+                ldt.plusSeconds(4),
+                item,
+                booker,
+                APPROVED);
+        List<Booking> bookingList = List.of(booking1, booking2);
+        when(userService.getUserDtoById(brp.getUserId())).thenReturn(null);
+        when(bookingRepository.findByBookerIdCurrent(eq(brp.getUserId()), any(PageRequest.class)))
+                .thenReturn(bookingList);
+
+        List<BookingDtoOut> responseList = bookingService.getAllUserBookings(brp);
+
+        assertEquals((BookingMapper.toBookingResponseDtoList(bookingList)).size(), responseList.size());
+        verify(userService).getUserDtoById(anyLong());
+        verify(bookingRepository).findByBookerIdCurrent(eq(brp.getUserId()), any(PageRequest.class));
+    }
+
+    @Test
+    void getAllUserBookings_whenStatePast_thenResponseContainsListOfBookings() {
+        LocalDateTime ldt = LocalDateTime.now();
+        User booker = new User(1L, "booker", "booker@yandex.ru");
+        Item item = new Item(1L, "Вещь", "Описание", true, new User(), null);
+        BookingRequestParams brp = new BookingRequestParams(States.PAST, 1L, 0, 5);
+        Booking booking1 = new Booking(
+                1L,
+                ldt.plusSeconds(1),
+                ldt.plusSeconds(2),
+                item,
+                booker,
+                APPROVED);
+        Booking booking2 = new Booking(
+                1L,
+                ldt.plusSeconds(3),
+                ldt.plusSeconds(4),
+                item,
+                booker,
+                APPROVED);
+        List<Booking> bookingList = List.of(booking1, booking2);
+        when(userService.getUserDtoById(brp.getUserId())).thenReturn(null);
+        when(bookingRepository.findByBookerIdPast(eq(brp.getUserId()), any(PageRequest.class)))
+                .thenReturn(bookingList);
+
+        List<BookingDtoOut> responseList = bookingService.getAllUserBookings(brp);
+
+        assertEquals((BookingMapper.toBookingResponseDtoList(bookingList)).size(), responseList.size());
+        verify(userService).getUserDtoById(anyLong());
+        verify(bookingRepository).findByBookerIdPast(eq(brp.getUserId()), any(PageRequest.class));
+    }
+
+    @Test
+    void getAllUserBookings_whenStateFuture_thenResponseContainsListOfBookings() {
+        LocalDateTime ldt = LocalDateTime.now();
+        User booker = new User(1L, "booker", "booker@yandex.ru");
+        Item item = new Item(1L, "Вещь", "Описание", true, new User(), null);
+        BookingRequestParams brp = new BookingRequestParams(States.FUTURE, 1L, 0, 5);
+        Booking booking1 = new Booking(
+                1L,
+                ldt.plusSeconds(1),
+                ldt.plusSeconds(2),
+                item,
+                booker,
+                APPROVED);
+        Booking booking2 = new Booking(
+                1L,
+                ldt.plusSeconds(3),
+                ldt.plusSeconds(4),
+                item,
+                booker,
+                APPROVED);
+        List<Booking> bookingList = List.of(booking1, booking2);
+        when(userService.getUserDtoById(brp.getUserId())).thenReturn(null);
+        when(bookingRepository.findByBookerIdFuture(eq(brp.getUserId()), any(PageRequest.class)))
+                .thenReturn(bookingList);
+
+        List<BookingDtoOut> responseList = bookingService.getAllUserBookings(brp);
+
+        assertEquals((BookingMapper.toBookingResponseDtoList(bookingList)).size(), responseList.size());
+        verify(userService).getUserDtoById(anyLong());
+        verify(bookingRepository).findByBookerIdFuture(eq(brp.getUserId()), any(PageRequest.class));
+    }
+
+    @Test
+    void getAllUserBookings_whenStateWaiting_thenResponseContainsListOfBookings() {
+        LocalDateTime ldt = LocalDateTime.now();
+        User booker = new User(1L, "booker", "booker@yandex.ru");
+        Item item = new Item(1L, "Вещь", "Описание", true, new User(), null);
+        BookingRequestParams brp = new BookingRequestParams(States.WAITING, 1L, 0, 5);
+        Booking booking1 = new Booking(
+                1L,
+                ldt.plusSeconds(1),
+                ldt.plusSeconds(2),
+                item,
+                booker,
+                APPROVED);
+        Booking booking2 = new Booking(
+                1L,
+                ldt.plusSeconds(3),
+                ldt.plusSeconds(4),
+                item,
+                booker,
+                APPROVED);
+        List<Booking> bookingList = List.of(booking1, booking2);
+        when(userService.getUserDtoById(brp.getUserId())).thenReturn(null);
+        when(bookingRepository.findByBookerIdWaiting(eq(brp.getUserId()), any(PageRequest.class)))
+                .thenReturn(bookingList);
+
+        List<BookingDtoOut> responseList = bookingService.getAllUserBookings(brp);
+
+        assertEquals((BookingMapper.toBookingResponseDtoList(bookingList)).size(), responseList.size());
+        verify(userService).getUserDtoById(anyLong());
+        verify(bookingRepository).findByBookerIdWaiting(eq(brp.getUserId()), any(PageRequest.class));
+    }
+
+    @Test
+    void getAllUserBookings_whenStateRejected_thenResponseContainsListOfBookings() {
+        LocalDateTime ldt = LocalDateTime.now();
+        User booker = new User(1L, "booker", "booker@yandex.ru");
+        Item item = new Item(1L, "Вещь", "Описание", true, new User(), null);
+        BookingRequestParams brp = new BookingRequestParams(States.REJECTED, 1L, 0, 5);
+        Booking booking1 = new Booking(
+                1L,
+                ldt.plusSeconds(1),
+                ldt.plusSeconds(2),
+                item,
+                booker,
+                APPROVED);
+        Booking booking2 = new Booking(
+                1L,
+                ldt.plusSeconds(3),
+                ldt.plusSeconds(4),
+                item,
+                booker,
+                APPROVED);
+        List<Booking> bookingList = List.of(booking1, booking2);
+        when(userService.getUserDtoById(brp.getUserId())).thenReturn(null);
+        when(bookingRepository.findByBookerIdRejected(eq(brp.getUserId()), any(PageRequest.class)))
+                .thenReturn(bookingList);
+
+        List<BookingDtoOut> responseList = bookingService.getAllUserBookings(brp);
+
+        assertEquals((BookingMapper.toBookingResponseDtoList(bookingList)).size(), responseList.size());
+        verify(userService).getUserDtoById(anyLong());
+        verify(bookingRepository).findByBookerIdRejected(eq(brp.getUserId()), any(PageRequest.class));
+    }
+
+    @Test
     void getAllUserBookings_whenStateUnknown_thenFailStateExceptionThrown() {
         BookingRequestParams brp = new BookingRequestParams(States.UNSUPPORTED_STATUS, 1L, 0, 5);
+        when(userService.getUserDtoById(brp.getUserId())).thenReturn(null);
+
+        assertThrows(FailStateException.class, () -> bookingService.getAllUserBookings(brp));
+
+        verify(userService).getUserDtoById(anyLong());
+    }
+
+    @Test
+    void getAllUserBookings_whenStateUnknownAndFromEquals1_thenFailStateExceptionThrown() {
+        BookingRequestParams brp = new BookingRequestParams(States.UNSUPPORTED_STATUS, 1L, 1, 5);
         when(userService.getUserDtoById(brp.getUserId())).thenReturn(null);
 
         assertThrows(FailStateException.class, () -> bookingService.getAllUserBookings(brp));
@@ -444,7 +664,7 @@ class BookingServiceImplTest {
                 new Item(1L, "Садовая тачка",
                         "Возит сама", true, new User(), null),
                 new User(1L, "booker", "booker@yandex.ru"),
-                BookingStatus.APPROVED
+                APPROVED
         );
         Booking booking2 = new Booking(
                 2L,
@@ -453,7 +673,7 @@ class BookingServiceImplTest {
                 new Item(1L, "Самокат",
                         "Сам едет", true, new User(), null),
                 new User(1L, "booker", "booker@yandex.ru"),
-                BookingStatus.APPROVED
+                APPROVED
         );
         List<Booking> bookingList = List.of(booking1, booking2);
         PageRequest page = PageRequest.of(brp.getFrom(), brp.getSize());
@@ -469,40 +689,177 @@ class BookingServiceImplTest {
 
     @Test
     void getAllOwnerBookings_whenStateCurrent_thenResponseContainsListOfBookings() {
+        LocalDateTime ldt = LocalDateTime.now();
+        User booker = new User(1L, "booker", "booker@yandex.ru");
+        Item item = new Item(1L, "Вещь", "Описание", true, new User(), null);
         BookingRequestParams brp = new BookingRequestParams(States.CURRENT, 1L, 0, 5);
         Booking booking1 = new Booking(
                 1L,
-                LocalDateTime.now().plusSeconds(1),
-                LocalDateTime.now().plusSeconds(2),
-                new Item(1L, "Садовая тачка",
-                        "Возит сама", true, new User(), null),
-                new User(1L, "booker", "booker@yandex.ru"),
-                BookingStatus.APPROVED
-        );
+                ldt.plusSeconds(1),
+                ldt.plusSeconds(2),
+                item,
+                booker,
+                APPROVED);
         Booking booking2 = new Booking(
-                2L,
-                LocalDateTime.now().plusSeconds(3),
-                LocalDateTime.now().plusSeconds(4),
-                new Item(1L, "Самокат",
-                        "Сам едет", true, new User(), null),
-                new User(1L, "booker", "booker@yandex.ru"),
-                BookingStatus.APPROVED
-        );
+                1L,
+                ldt.plusSeconds(3),
+                ldt.plusSeconds(4),
+                item,
+                booker,
+                APPROVED);
         List<Booking> bookingList = List.of(booking1, booking2);
-        PageRequest page = PageRequest.of(brp.getFrom(), brp.getSize());
         when(userService.getUserDtoById(anyLong())).thenReturn(null);
-        when(bookingRepository.findByOwnerIdCurrent(brp.getUserId(), page)).thenReturn(bookingList);
+        when(bookingRepository.findByOwnerIdCurrent(eq(brp.getUserId()), any(PageRequest.class)))
+                .thenReturn(bookingList);
 
         List<BookingDtoOut> responseList = bookingService.getAllOwnerBookings(brp);
 
         assertEquals((BookingMapper.toBookingResponseDtoList(bookingList)).size(), responseList.size());
         verify(userService).getUserDtoById(anyLong());
-        verify(bookingRepository).findByOwnerIdCurrent(brp.getUserId(), page);
+        verify(bookingRepository).findByOwnerIdCurrent(eq(brp.getUserId()), any(PageRequest.class));
+    }
+
+    @Test
+    void getAllOwnerBookings_whenStatePast_thenResponseContainsListOfBookings() {
+        LocalDateTime ldt = LocalDateTime.now();
+        User booker = new User(1L, "booker", "booker@yandex.ru");
+        Item item = new Item(1L, "Вещь", "Описание", true, new User(), null);
+        BookingRequestParams brp = new BookingRequestParams(States.PAST, 1L, 0, 5);
+        Booking booking1 = new Booking(
+                1L,
+                ldt.plusSeconds(1),
+                ldt.plusSeconds(2),
+                item,
+                booker,
+                APPROVED);
+        Booking booking2 = new Booking(
+                1L,
+                ldt.plusSeconds(3),
+                ldt.plusSeconds(4),
+                item,
+                booker,
+                APPROVED);
+        List<Booking> bookingList = List.of(booking1, booking2);
+        when(userService.getUserDtoById(anyLong())).thenReturn(null);
+        when(bookingRepository.findByOwnerIdPast(eq(brp.getUserId()), any(PageRequest.class)))
+                .thenReturn(bookingList);
+
+        List<BookingDtoOut> responseList = bookingService.getAllOwnerBookings(brp);
+
+        assertEquals((BookingMapper.toBookingResponseDtoList(bookingList)).size(), responseList.size());
+        verify(userService).getUserDtoById(anyLong());
+        verify(bookingRepository).findByOwnerIdPast(eq(brp.getUserId()), any(PageRequest.class));
+    }
+
+    @Test
+    void getAllOwnerBookings_whenStateFuture_thenResponseContainsListOfBookings() {
+        LocalDateTime ldt = LocalDateTime.now();
+        User booker = new User(1L, "booker", "booker@yandex.ru");
+        Item item = new Item(1L, "Вещь", "Описание", true, new User(), null);
+        BookingRequestParams brp = new BookingRequestParams(States.FUTURE, 1L, 0, 5);
+        Booking booking1 = new Booking(
+                1L,
+                ldt.plusSeconds(1),
+                ldt.plusSeconds(2),
+                item,
+                booker,
+                APPROVED);
+        Booking booking2 = new Booking(
+                1L,
+                ldt.plusSeconds(3),
+                ldt.plusSeconds(4),
+                item,
+                booker,
+                APPROVED);
+        List<Booking> bookingList = List.of(booking1, booking2);
+        when(userService.getUserDtoById(anyLong())).thenReturn(null);
+        when(bookingRepository.findByOwnerIdFuture(eq(brp.getUserId()), any(PageRequest.class)))
+                .thenReturn(bookingList);
+
+        List<BookingDtoOut> responseList = bookingService.getAllOwnerBookings(brp);
+
+        assertEquals((BookingMapper.toBookingResponseDtoList(bookingList)).size(), responseList.size());
+        verify(userService).getUserDtoById(anyLong());
+        verify(bookingRepository).findByOwnerIdFuture(eq(brp.getUserId()), any(PageRequest.class));
+    }
+
+    @Test
+    void getAllOwnerBookings_whenStateWaiting_thenResponseContainsListOfBookings() {
+        LocalDateTime ldt = LocalDateTime.now();
+        User booker = new User(1L, "booker", "booker@yandex.ru");
+        Item item = new Item(1L, "Вещь", "Описание", true, new User(), null);
+        BookingRequestParams brp = new BookingRequestParams(States.WAITING, 1L, 0, 5);
+        Booking booking1 = new Booking(
+                1L,
+                ldt.plusSeconds(1),
+                ldt.plusSeconds(2),
+                item,
+                booker,
+                APPROVED);
+        Booking booking2 = new Booking(
+                1L,
+                ldt.plusSeconds(3),
+                ldt.plusSeconds(4),
+                item,
+                booker,
+                APPROVED);
+        List<Booking> bookingList = List.of(booking1, booking2);
+        when(userService.getUserDtoById(anyLong())).thenReturn(null);
+        when(bookingRepository.findByOwnerIdWaiting(eq(brp.getUserId()), any(PageRequest.class)))
+                .thenReturn(bookingList);
+
+        List<BookingDtoOut> responseList = bookingService.getAllOwnerBookings(brp);
+
+        assertEquals((BookingMapper.toBookingResponseDtoList(bookingList)).size(), responseList.size());
+        verify(userService).getUserDtoById(anyLong());
+        verify(bookingRepository).findByOwnerIdWaiting(eq(brp.getUserId()), any(PageRequest.class));
+    }
+
+    @Test
+    void getAllOwnerBookings_whenStateRejected_thenResponseContainsListOfBookings() {
+        LocalDateTime ldt = LocalDateTime.now();
+        User booker = new User(1L, "booker", "booker@yandex.ru");
+        Item item = new Item(1L, "Вещь", "Описание", true, new User(), null);
+        BookingRequestParams brp = new BookingRequestParams(States.REJECTED, 1L, 0, 5);
+        Booking booking1 = new Booking(
+                1L,
+                ldt.plusSeconds(1),
+                ldt.plusSeconds(2),
+                item,
+                booker,
+                APPROVED);
+        Booking booking2 = new Booking(
+                1L,
+                ldt.plusSeconds(3),
+                ldt.plusSeconds(4),
+                item,
+                booker,
+                APPROVED);
+        List<Booking> bookingList = List.of(booking1, booking2);
+        when(userService.getUserDtoById(anyLong())).thenReturn(null);
+        when(bookingRepository.findByOwnerIdRejected(eq(brp.getUserId()), any(PageRequest.class)))
+                .thenReturn(bookingList);
+
+        List<BookingDtoOut> responseList = bookingService.getAllOwnerBookings(brp);
+
+        assertEquals((BookingMapper.toBookingResponseDtoList(bookingList)).size(), responseList.size());
+        verify(userService).getUserDtoById(anyLong());
+        verify(bookingRepository).findByOwnerIdRejected(eq(brp.getUserId()), any(PageRequest.class));
     }
 
     @Test
     void getAllOwnerBookings_whenStateUnknown_thenFailStateExceptionThrown() {
         BookingRequestParams brp = new BookingRequestParams(States.UNSUPPORTED_STATUS, 1L, 0, 5);
+        when(userService.getUserDtoById(anyLong())).thenReturn(null);
+
+        assertThrows(FailStateException.class, () -> bookingService.getAllOwnerBookings(brp));
+
+        verify(userService).getUserDtoById(anyLong());
+    }
+
+    @Test
+    void getAllOwnerBookings_whenStateUnknownAndFromEquals1_thenFailStateExceptionThrown() {
+        BookingRequestParams brp = new BookingRequestParams(States.UNSUPPORTED_STATUS, 1L, 1, 5);
         when(userService.getUserDtoById(anyLong())).thenReturn(null);
 
         assertThrows(FailStateException.class, () -> bookingService.getAllOwnerBookings(brp));

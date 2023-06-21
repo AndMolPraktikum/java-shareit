@@ -49,7 +49,7 @@ public class ItemServiceImpl implements ItemService {
     public ItemDtoOut getItemDtoByIdForAll(long itemId, long userId) {
         Item item = getItemById(itemId);
         ItemWithBooking itemWithBooking = ItemMapper.toItemWithBooking(item);
-        if (item.getOwner() != null && item.getOwner().getId() == userId) {
+        if (item.getOwner().getId() == userId) {
             setBookings(itemWithBooking);
         }
         itemWithBooking.setComments(commentRepository.findAllByItemId(itemId));
@@ -117,7 +117,7 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public Item checkUserItem(long userId, long itemId) {
         Item item = getItemById(itemId);
-        if (item.getOwner() != null && item.getOwner().getId() != userId) {
+        if (item.getOwner().getId() != userId) {
             log.error("Пользователь с ID: {} не является владельцем вещи с ID: {}", userId, itemId);
             throw new UserHaveNoSuchItemException(
                     String.format("Пользователь с ID: %d не является владельцем вещи с ID: %d", userId, itemId));

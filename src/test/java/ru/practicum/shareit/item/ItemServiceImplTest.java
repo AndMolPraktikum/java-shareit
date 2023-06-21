@@ -7,7 +7,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
 import ru.practicum.shareit.booking.BookingRepository;
+import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.comments.CommentRepository;
+import ru.practicum.shareit.enums.BookingStatus;
 import ru.practicum.shareit.exception.ItemNotFoundException;
 import ru.practicum.shareit.exception.UserHaveNoSuchItemException;
 import ru.practicum.shareit.item.dto.ItemDtoIn;
@@ -15,10 +17,13 @@ import ru.practicum.shareit.item.dto.ItemDtoOut;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.model.ItemWithBooking;
 import ru.practicum.shareit.mapper.ItemMapper;
+import ru.practicum.shareit.request.ItemRequestService;
+import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.user.UserService;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.model.User;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -42,18 +47,22 @@ class ItemServiceImplTest {
     private UserService userService;
 
     @Mock
-    BookingRepository bookingRepository;
+    private ItemRequestService itemRequestService;
+
+    @Mock
+    private BookingRepository bookingRepository;
 
     @InjectMocks
     private ItemServiceImpl itemServiceImpl;
 
     @Test
     void getItemDtoByIdForAll_whenInvoked_thenResponseWithItemDtoOut() {
-        long userId = 1L;
+        long userId = 2L;
         long itemId = 1L;
         ItemWithBooking itemOut = new ItemWithBooking(1L, "Садовая тачка",
                 "Возит сама", true, null, null, new ArrayList<>());
-        Item item = new Item(1L, "Садовая тачка", "Возит сама", true);
+        User user = new User(1L, "user", "user@yandex.ru");
+        Item item = new Item(1L, "Садовая тачка", "Возит сама", true, user, null);
         when(commentRepository.findAllByItemId(itemId)).thenReturn(Collections.emptyList());
         when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
 
@@ -87,22 +96,105 @@ class ItemServiceImplTest {
     }
 
     @Test
+    void getItemDtoByIdForAll_whenUserIdNotEqualItemIdSetBooking_thenResponseWithItemWithBookingDto() {
+        long userId = 2L;
+        long itemId = 1L;
+        Booking last = new Booking(
+                1L,
+                LocalDateTime.now().plusSeconds(1),
+                LocalDateTime.now().plusSeconds(2),
+                new Item(),
+                new User(1L, "user", "user@yandex.ru"),
+                BookingStatus.WAITING
+        );
+        Booking next = new Booking(
+                2L,
+                LocalDateTime.now().plusSeconds(3),
+                LocalDateTime.now().plusSeconds(4),
+                new Item(),
+                new User(1L, "user", "user@yandex.ru"),
+                BookingStatus.WAITING
+        );
+        User user = new User(2L, "user", "user@yandex.ru");
+        Item item = new Item(1L, "Садовая тачка", "Возит сама", true, user, null);
+        ItemWithBooking itemOut = new ItemWithBooking(1L, "Садовая тачка",
+                "Возит сама", true, last, next, new ArrayList<>());
+        when(commentRepository.findAllByItemId(itemId)).thenReturn(Collections.emptyList());
+        when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
+        when(bookingRepository.findLastBookingForItem(itemId)).thenReturn(List.of(last));
+        when(bookingRepository.findNextBookingForItem(itemId)).thenReturn(List.of(next));
+
+        ItemDtoOut response = itemServiceImpl.getItemDtoByIdForAll(itemId, userId);
+
+        assertEquals(ItemMapper.toItemWithBookingDto(itemOut), response);
+        verify(commentRepository).findAllByItemId(itemId);
+        verify(bookingRepository).findLastBookingForItem(itemId);
+        verify(bookingRepository).findNextBookingForItem(itemId);
+    }
+
+    @Test
+    void getItemDtoByIdForAll_whenWithoutNextBooking_thenResponseWithItemWithBookingDto() {
+        long userId = 2L;
+        long itemId = 1L;
+        Booking last = new Booking(
+                1L,
+                LocalDateTime.now().plusSeconds(1),
+                LocalDateTime.now().plusSeconds(2),
+                new Item(),
+                new User(1L, "user", "user@yandex.ru"),
+                BookingStatus.WAITING
+        );
+        User user = new User(2L, "user", "user@yandex.ru");
+        Item item = new Item(1L, "Садовая тачка", "Возит сама", true, user, null);
+        ItemWithBooking itemOut = new ItemWithBooking(1L, "Садовая тачка",
+                "Возит сама", true, last, null, new ArrayList<>());
+        when(commentRepository.findAllByItemId(itemId)).thenReturn(Collections.emptyList());
+        when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
+        when(bookingRepository.findLastBookingForItem(itemId)).thenReturn(List.of(last));
+        when(bookingRepository.findNextBookingForItem(itemId)).thenReturn(Collections.emptyList());
+
+        ItemDtoOut response = itemServiceImpl.getItemDtoByIdForAll(itemId, userId);
+
+        assertEquals(ItemMapper.toItemWithBookingDto(itemOut), response);
+        verify(commentRepository).findAllByItemId(itemId);
+        verify(bookingRepository).findLastBookingForItem(itemId);
+        verify(bookingRepository).findNextBookingForItem(itemId);
+    }
+
+    @Test
     void getAllUserItemsDto_whenInvoked_thenResponseContainsItemDtoOutInBody() {
         long userId = 1L;
         int from = 0;
         int size = 10;
         Item item1 =
-                new Item(1L, "Садовая тачка","Возит сама", true, new User(), null);
+                new Item(1L, "Садовая тачка", "Возит сама", true, new User(), null);
         Item item2 =
-                new Item(2L, "Самокат","Возит сам", true, new User(), null);
-        PageRequest page = PageRequest.of(from > 0 ? from / size : 0, size);
+                new Item(2L, "Самокат", "Возит сам", true, new User(), null);
         List<Item> itemList = List.of(item1, item2);
-        when(itemRepository.findAllByOwnerIdOrderByIdAsc(userId, page)).thenReturn(itemList);
+        when(itemRepository.findAllByOwnerIdOrderByIdAsc(eq(userId), any(PageRequest.class))).thenReturn(itemList);
 
         List<ItemDtoOut> response = itemServiceImpl.getAllUserItemsDto(userId, from, size);
 
         assertEquals(itemList.size(), response.size());
-        verify(itemRepository).findAllByOwnerIdOrderByIdAsc(userId, page);
+        verify(itemRepository).findAllByOwnerIdOrderByIdAsc(eq(userId), any(PageRequest.class));
+    }
+
+    @Test
+    void getAllUserItemsDto_whenFromEquals1_thenResponseContainsItemDtoOutInBody() {
+        long userId = 1L;
+        int from = 1;
+        int size = 10;
+        Item item1 =
+                new Item(1L, "Садовая тачка", "Возит сама", true, new User(), null);
+        Item item2 =
+                new Item(2L, "Самокат", "Возит сам", true, new User(), null);
+        List<Item> itemList = List.of(item1, item2);
+        when(itemRepository.findAllByOwnerIdOrderByIdAsc(eq(userId), any(PageRequest.class))).thenReturn(itemList);
+
+        List<ItemDtoOut> response = itemServiceImpl.getAllUserItemsDto(userId, from, size);
+
+        assertEquals(itemList.size(), response.size());
+        verify(itemRepository).findAllByOwnerIdOrderByIdAsc(eq(userId), any(PageRequest.class));
     }
 
     @Test
@@ -122,6 +214,32 @@ class ItemServiceImplTest {
     }
 
     @Test
+    void searchItemDtoByText_whenTextLengthIs0_thenResponseContainsItemDtoOutInBody() {
+        String text = "";
+        int from = 1;
+        int size = 10;
+        PageRequest page = PageRequest.of(from > 0 ? from / size : 0, size);
+
+        List<ItemDtoOut> response = itemServiceImpl.searchItemDtoByText(text, from, size);
+
+        assertEquals(0, response.size());
+        verify(itemRepository, never()).findByNameContainingOrDescriptionContaining(text.toUpperCase(), page);
+    }
+
+    @Test
+    void searchItemDtoByText_whenTextIsBlank_thenResponseContainsItemDtoOutInBody() {
+        String text = " ";
+        int from = 1;
+        int size = 10;
+        PageRequest page = PageRequest.of(from > 0 ? from / size : 0, size);
+
+        List<ItemDtoOut> response = itemServiceImpl.searchItemDtoByText(text, from, size);
+
+        assertEquals(0, response.size());
+        verify(itemRepository, never()).findByNameContainingOrDescriptionContaining(text.toUpperCase(), page);
+    }
+
+    @Test
     void createItem_whenInvoked_thenItemCreated() {
         long userId = 1L;
         ItemDtoIn itemDtoIn = new ItemDtoIn("Садовая тачка", "Возит сама", true);
@@ -137,6 +255,23 @@ class ItemServiceImplTest {
     }
 
     @Test
+    void createItem_whenRequestNotNull_thenItemCreated() {
+        long userId = 1L;
+        ItemRequest itemRequest = new ItemRequest();
+        ItemDtoIn itemDtoIn =
+                new ItemDtoIn(null, "Садовая тачка", "Возит сама", true, 1L);
+        Item itemOut = new Item(1L, "Садовая тачка",
+                "Возит сама", true, new User(), itemRequest);
+        when(itemRequestService.getItemRequestById(anyLong())).thenReturn(itemRequest);
+        when(itemRepository.save(any(Item.class))).thenReturn(itemOut);
+
+        ItemDtoOut response = itemServiceImpl.createItem(userId, itemDtoIn);
+
+        assertEquals(ItemMapper.toItemDtoOut(itemOut), response);
+        verify(itemRepository).save(any(Item.class));
+    }
+
+    @Test
     void updateItem_whenInvoked_thenItemUpdated() {
         long itemId = 1L;
         long userId = 1L;
@@ -147,6 +282,29 @@ class ItemServiceImplTest {
                 "Возит сама", true, user, null);
         Item updatedItem = new Item(1L, "Супер тачка",
                 "Теперь это робот", false, user, null);
+
+        when(userService.getUserDtoById(userId)).thenReturn(new UserDto());
+        when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
+        when(itemRepository.save(item)).thenReturn(updatedItem);
+
+        ItemDtoOut itemDtoOut = itemServiceImpl.updateItem(userId, itemId, updateItemDtoIn);
+
+        assertEquals(ItemMapper.toItemDtoOut(item), itemDtoOut);
+        verify(userService).getUserDtoById(userId);
+        verify(itemRepository).findById(itemId);
+        verify(itemRepository).save(item);
+    }
+
+    @Test
+    void updateItem_whenUpdateItemDtoInIsEmpty_thenItemUpdated() {
+        long itemId = 1L;
+        long userId = 1L;
+        User user = new User(1L, "user", "user@yandex.ru");
+        ItemDtoIn updateItemDtoIn = new ItemDtoIn(2L, null, null, null);
+        Item item = new Item(1L, "Садовая тачка",
+                "Возит сама", true, user, null);
+        Item updatedItem = new Item(1L, "Садовая тачка",
+                "Возит сама", true, user, null);
 
         when(userService.getUserDtoById(userId)).thenReturn(new UserDto());
         when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));

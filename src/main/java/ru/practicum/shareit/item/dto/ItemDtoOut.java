@@ -46,12 +46,6 @@ public class ItemDtoOut {
         this.comments = comments;
     }
 
-    public ItemDtoOut(Long id, String name, UserDto owner) {
-        this.id = id;
-        this.name = name;
-        this.owner = owner;
-    }
-
     public ItemDtoOut(Long id, String name, String description, Boolean available, Long requestId) {
         this.id = id;
         this.name = name;
@@ -59,5 +53,4 @@ public class ItemDtoOut {
         this.available = available;
         this.requestId = requestId;
     }
-
 }

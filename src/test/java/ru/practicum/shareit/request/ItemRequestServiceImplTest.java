@@ -23,8 +23,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -60,22 +59,41 @@ class ItemRequestServiceImplTest {
     }
 
     @Test
-    void getAllItemRequestDtoOut_whenInvoked_thenResponseContainsListOfItemRequests() {
+    void getAllItemRequestDtoOut_whenInvokedWithFromEquals0_thenResponseContainsListOfItemRequests() {
         long userId = 1L;
         int from = 0;
         int size = 5;
-        PageRequest page = PageRequest.of(from, size);
         ItemRequest itemRequest1 = new ItemRequest(1L, "Нужен аквариум", new User(), LocalDateTime.now());
         ItemRequest itemRequest2 = new ItemRequest(2L, "Нужны рыбки", new User(), LocalDateTime.now());
         List<ItemRequest> itemRequestList = List.of(itemRequest1, itemRequest2);
         when(userService.getUserById(userId)).thenReturn(null);
-        when(itemRequestRepository.findAllByRequesterIdNotOrderByCreatedDesc(page, userId)).thenReturn(itemRequestList);
+        when(itemRequestRepository.findAllByRequesterIdNotOrderByCreatedDesc(any(PageRequest.class), eq(userId)))
+                .thenReturn(itemRequestList);
 
         List<ItemRequestDtoOut> requestDtoOutList = itemRequestServiceImpl.getAllItemRequestDtoOut(userId, from, size);
 
         assertEquals(ItemRequestMapper.toItemRequestDtoOutList(itemRequestList), requestDtoOutList);
         verify(userService).getUserById(userId);
-        verify(itemRequestRepository).findAllByRequesterIdNotOrderByCreatedDesc(page, userId);
+        verify(itemRequestRepository).findAllByRequesterIdNotOrderByCreatedDesc(any(PageRequest.class), eq(userId));
+    }
+
+    @Test
+    void getAllItemRequestDtoOut_whenInvokedWithFromEquals1_thenResponseContainsListOfItemRequests() {
+        long userId = 1L;
+        int from = 1;
+        int size = 5;
+        ItemRequest itemRequest1 = new ItemRequest(1L, "Нужен аквариум", new User(), LocalDateTime.now());
+        ItemRequest itemRequest2 = new ItemRequest(2L, "Нужны рыбки", new User(), LocalDateTime.now());
+        List<ItemRequest> itemRequestList = List.of(itemRequest1, itemRequest2);
+        when(userService.getUserById(userId)).thenReturn(null);
+        when(itemRequestRepository.findAllByRequesterIdNotOrderByCreatedDesc(any(PageRequest.class), eq(userId)))
+                .thenReturn(itemRequestList);
+
+        List<ItemRequestDtoOut> requestDtoOutList = itemRequestServiceImpl.getAllItemRequestDtoOut(userId, from, size);
+
+        assertEquals(ItemRequestMapper.toItemRequestDtoOutList(itemRequestList), requestDtoOutList);
+        verify(userService).getUserById(userId);
+        verify(itemRequestRepository).findAllByRequesterIdNotOrderByCreatedDesc(any(PageRequest.class), eq(userId));
     }
 
     @Test

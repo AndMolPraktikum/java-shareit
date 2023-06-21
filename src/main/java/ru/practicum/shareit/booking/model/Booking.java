@@ -46,8 +46,4 @@ public class Booking {
         this.end = end;
         this.status = status;
     }
-
-    public Booking(Long id) {
-        this.id = id;
-    }
 }

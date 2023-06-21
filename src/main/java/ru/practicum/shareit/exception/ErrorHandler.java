@@ -21,7 +21,7 @@ public class ErrorHandler {
         return new Response(String.format("%s %s", LocalDateTime.now(), e.getMessage()));
     }
 
-    @ExceptionHandler({ConstraintViolationException.class})
+    @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Response handleConstraintViolationException(final ConstraintViolationException e) {
         log.info("400 {}", e.getMessage(), e);

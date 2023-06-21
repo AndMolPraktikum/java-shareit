@@ -8,7 +8,6 @@ import ru.practicum.shareit.item.dto.ItemDtoOut;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.model.ItemWithBooking;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,12 +48,6 @@ public class ItemMapper {
         );
     }
 
-    public static List<ItemWithBooking> toItemWithBookingList(List<Item> items) {
-        return items.stream()
-                .map(ItemMapper::toItemWithBooking)
-                .collect(Collectors.toList());
-    }
-
     public static ItemDtoOut toItemWithBookingDto(ItemWithBooking itemWithBooking) {
         return new ItemDtoOut(
                 itemWithBooking.getId(),
@@ -82,22 +75,4 @@ public class ItemMapper {
                 booking.getBooker().getId()
         );
     }
-
-    public static ItemDtoOut toItemWithUserDto(Item item) {
-        return new ItemDtoOut(
-                item.getId(),
-                item.getName(),
-                UserMapper.toUserDto(item.getOwner())
-        );
-    }
-
-    public static List<ItemDtoOut> toItemWithUserDtoList(List<Item> itemList) {
-        if (itemList == null) {
-            return Collections.emptyList();
-        }
-        return itemList.stream()
-                .map(ItemMapper::toItemWithUserDto)
-                .collect(Collectors.toList());
-    }
-
 }

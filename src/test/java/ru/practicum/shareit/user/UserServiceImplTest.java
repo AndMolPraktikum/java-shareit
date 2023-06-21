@@ -101,6 +101,21 @@ class UserServiceImplTest {
         verify(userRepository).save(any(User.class));
     }
 
+    @Test
+    void updateUser_whenUpdateIsEmpty_thenUserUpdate() {
+        long userId = 1L;
+        UserDto updateUserDto = new UserDto(null, null);
+        User updateUser = new User(1L, "user1", "user1@yandex.ru");
+        User updatedUser = new User(1L, "user1", "user1@yandex.ru");
+        when(userRepository.findById(userId)).thenReturn(Optional.of(updateUser));
+        when(userRepository.save(any(User.class))).thenReturn(updateUser);
+
+        UserDto response = userServiceImpl.updateUser(userId, updateUserDto);
+
+        assertEquals(UserMapper.toUserDto(updatedUser), response);
+        verify(userRepository).findById(userId);
+        verify(userRepository).save(any(User.class));
+    }
 
     @Test
     void deleteUser_whenInvoked_thenUserDeleted() {
