@@ -99,13 +99,6 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public Response handleUserAlreadyExistException(final UserAlreadyExistException e) {
-        log.info("409 {}", e.getMessage(), e);
-        return new Response(String.format("%s %s", LocalDateTime.now(), e.getMessage()));
-    }
-
-    @ExceptionHandler
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorMessage handleFailStateException(final FailStateException e) {
         log.info("500 {}", e.getMessage(), e);

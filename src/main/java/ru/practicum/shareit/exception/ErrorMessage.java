@@ -1,19 +1,11 @@
 package ru.practicum.shareit.exception;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+@Data
+@AllArgsConstructor
 public class ErrorMessage {
 
-    //@JsonProperty("Error message")
     private String error;
-
-    public ErrorMessage(String error) {
-        this.error = error;
-    }
-
-    public String getError() {
-        return error;
-    }
-
-    public void setError(String error) {
-        this.error = error;
-    }
 }
