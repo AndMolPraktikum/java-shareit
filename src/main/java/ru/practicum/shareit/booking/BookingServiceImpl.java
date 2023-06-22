@@ -6,8 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.shareit.booking.dto.BookingDtoIn;
-import ru.practicum.shareit.booking.dto.BookingDtoOut;
+import ru.practicum.shareit.booking.dto.BookingRequest;
+import ru.practicum.shareit.booking.dto.BookingResponse;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.BookingRequestParams;
 import ru.practicum.shareit.enums.States;
@@ -41,19 +41,19 @@ public class BookingServiceImpl implements BookingService {
 
     @Transactional
     @Override
-    public BookingDtoOut create(BookingDtoIn bookingDtoIn, long bookerId) {
-        Booking booking = BookingMapper.toBookingEntity(bookingDtoIn);
+    public BookingResponse create(BookingRequest bookingRequest, long bookerId) {
+        Booking booking = BookingMapper.toBookingEntity(bookingRequest);
         final User user = userService.getUserById(bookerId);
-        final Item item = itemService.getItemById(bookingDtoIn.getItemId());
+        final Item item = itemService.getItemById(bookingRequest.getItemId());
         booking.setBooker(user);
         checkBooking(booking, item);
         booking.setItem(item);
-        return BookingMapper.toBookingResponseDto(bookingRepository.save(booking));
+        return BookingMapper.toBookingResponse(bookingRepository.save(booking));
     }
 
     @Transactional
     @Override
-    public BookingDtoOut updateBookingStatus(long bookingId, boolean approved, long ownerId) {
+    public BookingResponse updateBookingStatus(long bookingId, boolean approved, long ownerId) {
         Booking booking = getBookingById(bookingId);
         if (!booking.getStatus().equals(WAITING)) {
             log.error("Бронирование уже проверено владельцем");
@@ -65,12 +65,12 @@ public class BookingServiceImpl implements BookingService {
         } else {
             booking.setStatus(REJECTED);
         }
-        return BookingMapper.toBookingResponseDto(bookingRepository.save(booking));
+        return BookingMapper.toBookingResponse(bookingRepository.save(booking));
     }
 
     @Override
-    public BookingDtoOut getBookingByIdForOwnerOrAuthor(long bookingId, Long userId) {
-        userService.getUserDtoById(userId);
+    public BookingResponse getBookingByIdForOwnerOrAuthor(long bookingId, Long userId) {
+        userService.getUserById(userId);
         Booking booking = getBookingById(bookingId);
         final long bookerId = booking.getBooker().getId();
         final long ownerId = booking.getItem().getOwner().getId();
@@ -82,30 +82,30 @@ public class BookingServiceImpl implements BookingService {
                     "не является ни владельцем вещи с ID: %d " +
                     "ни автором бронирования с ID: %d", userId, ownerId, bookerId));
         }
-        return BookingMapper.toBookingResponseDto(booking);
+        return BookingMapper.toBookingResponse(booking);
     }
 
     @Override
-    public List<BookingDtoOut> getAllUserBookings(BookingRequestParams bookingRequestParams) {
+    public List<BookingResponse> getAllUserBookings(BookingRequestParams bookingRequestParams) {
         States state = bookingRequestParams.getState();
         Long bookerId = bookingRequestParams.getUserId();
         int from = bookingRequestParams.getFrom();
         int size = bookingRequestParams.getSize();
         PageRequest page = PageRequest.of(from > 0 ? from / size : 0, size);
-        userService.getUserDtoById(bookerId);
+        userService.getUserById(bookerId);
         switch (state) {
             case CURRENT:
-                return BookingMapper.toBookingResponseDtoList(bookingRepository.findByBookerIdCurrent(bookerId, page));
+                return BookingMapper.toBookingResponseList(bookingRepository.findByBookerIdCurrent(bookerId, page));
             case PAST:
-                return BookingMapper.toBookingResponseDtoList(bookingRepository.findByBookerIdPast(bookerId, page));
+                return BookingMapper.toBookingResponseList(bookingRepository.findByBookerIdPast(bookerId, page));
             case FUTURE:
-                return BookingMapper.toBookingResponseDtoList(bookingRepository.findByBookerIdFuture(bookerId, page));
+                return BookingMapper.toBookingResponseList(bookingRepository.findByBookerIdFuture(bookerId, page));
             case WAITING:
-                return BookingMapper.toBookingResponseDtoList(bookingRepository.findByBookerIdWaiting(bookerId, page));
+                return BookingMapper.toBookingResponseList(bookingRepository.findByBookerIdWaiting(bookerId, page));
             case REJECTED:
-                return BookingMapper.toBookingResponseDtoList(bookingRepository.findByBookerIdRejected(bookerId, page));
+                return BookingMapper.toBookingResponseList(bookingRepository.findByBookerIdRejected(bookerId, page));
             case ALL:
-                return BookingMapper.toBookingResponseDtoList(bookingRepository
+                return BookingMapper.toBookingResponseList(bookingRepository
                         .findByBookerIdOrderByStartDesc(bookerId, page));
             default:
                 throw new FailStateException("Unknown state: UNSUPPORTED_STATUS");
@@ -113,26 +113,26 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDtoOut> getAllOwnerBookings(BookingRequestParams bookingRequestParams) {
+    public List<BookingResponse> getAllOwnerBookings(BookingRequestParams bookingRequestParams) {
         States state = bookingRequestParams.getState();
         Long ownerId = bookingRequestParams.getUserId();
         int from = bookingRequestParams.getFrom();
         int size = bookingRequestParams.getSize();
         PageRequest page = PageRequest.of(from > 0 ? from / size : 0, size);
-        userService.getUserDtoById(ownerId);
+        userService.getUserById(ownerId);
         switch (state) {
             case CURRENT:
-                return BookingMapper.toBookingResponseDtoList(bookingRepository.findByOwnerIdCurrent(ownerId, page));
+                return BookingMapper.toBookingResponseList(bookingRepository.findByOwnerIdCurrent(ownerId, page));
             case PAST:
-                return BookingMapper.toBookingResponseDtoList(bookingRepository.findByOwnerIdPast(ownerId, page));
+                return BookingMapper.toBookingResponseList(bookingRepository.findByOwnerIdPast(ownerId, page));
             case FUTURE:
-                return BookingMapper.toBookingResponseDtoList(bookingRepository.findByOwnerIdFuture(ownerId, page));
+                return BookingMapper.toBookingResponseList(bookingRepository.findByOwnerIdFuture(ownerId, page));
             case WAITING:
-                return BookingMapper.toBookingResponseDtoList(bookingRepository.findByOwnerIdWaiting(ownerId, page));
+                return BookingMapper.toBookingResponseList(bookingRepository.findByOwnerIdWaiting(ownerId, page));
             case REJECTED:
-                return BookingMapper.toBookingResponseDtoList(bookingRepository.findByOwnerIdRejected(ownerId, page));
+                return BookingMapper.toBookingResponseList(bookingRepository.findByOwnerIdRejected(ownerId, page));
             case ALL:
-                return BookingMapper.toBookingResponseDtoList(bookingRepository.findByOwnerIdAll(ownerId, page));
+                return BookingMapper.toBookingResponseList(bookingRepository.findByOwnerIdAll(ownerId, page));
             default:
                 throw new FailStateException("Unknown state: UNSUPPORTED_STATUS");
         }

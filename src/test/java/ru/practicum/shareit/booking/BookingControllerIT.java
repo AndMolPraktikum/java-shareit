@@ -9,19 +9,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.practicum.shareit.booking.dto.BookingDtoIn;
-import ru.practicum.shareit.booking.dto.BookingDtoOut;
+import ru.practicum.shareit.booking.dto.BookingRequest;
+import ru.practicum.shareit.booking.dto.BookingResponse;
 import ru.practicum.shareit.item.ItemRepository;
 import ru.practicum.shareit.item.dto.ItemDtoIn;
 import ru.practicum.shareit.item.dto.ItemDtoOut;
 import ru.practicum.shareit.user.UserRepository;
-import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.dto.UserRequest;
+import ru.practicum.shareit.user.dto.UserResponse;
 
 import java.time.LocalDateTime;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -50,7 +49,7 @@ class BookingControllerIT {
     @SneakyThrows
     @BeforeEach
     public void init() {
-        UserDto owner = new UserDto("owner", "owner@user.com");
+        UserRequest owner = new UserRequest("owner", "owner@user.com");
         String responseOwner = mockMvc.perform(post("/users")
                         .content(objectMapper.writeValueAsString(owner))
                         .contentType("application/json"))
@@ -58,7 +57,7 @@ class BookingControllerIT {
                 .getResponse()
                 .getContentAsString();
 
-        ownerId = objectMapper.readValue(responseOwner, UserDto.class).getId();
+        ownerId = objectMapper.readValue(responseOwner, UserResponse.class).getId();
 
         ItemDtoIn itemDto = new ItemDtoIn("Швабра", "Моет сама", true);
         String responseItem = mockMvc.perform(post("/items")
@@ -71,7 +70,7 @@ class BookingControllerIT {
 
         itemId = objectMapper.readValue(responseItem, ItemDtoOut.class).getId();
 
-        UserDto booker = new UserDto("booker", "booker@user.com");
+        UserRequest booker = new UserRequest("booker", "booker@user.com");
         String responseBooker = mockMvc.perform(post("/users")
                         .content(objectMapper.writeValueAsString(booker))
                         .contentType("application/json"))
@@ -79,7 +78,7 @@ class BookingControllerIT {
                 .getResponse()
                 .getContentAsString();
 
-        bookerId = objectMapper.readValue(responseBooker, UserDto.class).getId();
+        bookerId = objectMapper.readValue(responseBooker, UserResponse.class).getId();
     }
 
     @AfterEach
@@ -92,7 +91,7 @@ class BookingControllerIT {
     @Test
     @SneakyThrows
     void createBooking_whenBookerIdAndItemIdIsCorrect_thenUserCreated() {
-        BookingDtoIn brDto = new BookingDtoIn(itemId,
+        BookingRequest brDto = new BookingRequest(itemId,
                 LocalDateTime.now().plusMinutes(2),
                 LocalDateTime.now().plusMinutes(5));
 
@@ -106,7 +105,7 @@ class BookingControllerIT {
     @Test
     @SneakyThrows
     void updateBookingStatus_whenBookingFoundStatusWaitingApprovedTrue_thenBookingStatusUpdateToApproved() {
-        BookingDtoIn brDto = new BookingDtoIn(itemId,
+        BookingRequest brDto = new BookingRequest(itemId,
                 LocalDateTime.now().plusMinutes(2),
                 LocalDateTime.now().plusMinutes(5));
 
@@ -119,7 +118,7 @@ class BookingControllerIT {
                 .getResponse()
                 .getContentAsString();
 
-        long bookingId = objectMapper.readValue(responseBooking, BookingDtoOut.class).getId();
+        long bookingId = objectMapper.readValue(responseBooking, BookingResponse.class).getId();
 
         mockMvc.perform(patch("/bookings/{bookingId}", bookingId)
                         .header("X-Sharer-User-Id", ownerId)
@@ -133,7 +132,7 @@ class BookingControllerIT {
     @Test
     @SneakyThrows
     void getAllOwnerBookings_whenStateDefault_thenResponseContainsListOfBookings() {
-        BookingDtoIn brDto = new BookingDtoIn(itemId,
+        BookingRequest brDto = new BookingRequest(itemId,
                 LocalDateTime.now().plusMinutes(2),
                 LocalDateTime.now().plusMinutes(5));
 
@@ -146,7 +145,7 @@ class BookingControllerIT {
                 .getResponse()
                 .getContentAsString();
 
-        long bookingId = objectMapper.readValue(responseBooking, BookingDtoOut.class).getId();
+        long bookingId = objectMapper.readValue(responseBooking, BookingResponse.class).getId();
 
         mockMvc.perform(get("/bookings/owner")
                         .header("X-Sharer-User-Id", ownerId)
@@ -159,7 +158,7 @@ class BookingControllerIT {
     @Test
     @SneakyThrows
     void getAllUserBookings_whenTimeIsCorrect_thenResponseContainsListOfBookings() {
-        BookingDtoIn brDto = new BookingDtoIn(itemId,
+        BookingRequest brDto = new BookingRequest(itemId,
                 LocalDateTime.now().plusMinutes(2),
                 LocalDateTime.now().plusMinutes(5));
 
@@ -172,7 +171,7 @@ class BookingControllerIT {
                 .getResponse()
                 .getContentAsString();
 
-        long bookingId = objectMapper.readValue(responseBooking, BookingDtoOut.class).getId();
+        long bookingId = objectMapper.readValue(responseBooking, BookingResponse.class).getId();
 
         mockMvc.perform(get("/bookings")
                         .header("X-Sharer-User-Id", bookerId)
@@ -185,7 +184,7 @@ class BookingControllerIT {
     @Test
     @SneakyThrows
     void getBookingById_whenUserIdFound_thenResponseContainsBooking() {
-        BookingDtoIn brDto = new BookingDtoIn(itemId,
+        BookingRequest brDto = new BookingRequest(itemId,
                 LocalDateTime.now().plusMinutes(2),
                 LocalDateTime.now().plusMinutes(5));
 
@@ -198,7 +197,7 @@ class BookingControllerIT {
                 .getResponse()
                 .getContentAsString();
 
-        long bookingId = objectMapper.readValue(responseBooking, BookingDtoOut.class).getId();
+        long bookingId = objectMapper.readValue(responseBooking, BookingResponse.class).getId();
 
         mockMvc.perform(get("/bookings/{bookingId}", bookingId)
                         .header("X-Sharer-User-Id", bookerId)

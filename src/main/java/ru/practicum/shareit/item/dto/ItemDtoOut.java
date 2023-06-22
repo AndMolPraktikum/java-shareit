@@ -4,9 +4,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.practicum.shareit.booking.dto.BookingShortDto;
-import ru.practicum.shareit.comments.dto.CommentDto;
-import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.booking.dto.BookingResponse;
+import ru.practicum.shareit.comments.dto.CommentResponse;
+import ru.practicum.shareit.user.dto.UserResponse;
 
 import java.util.List;
 
@@ -24,19 +24,19 @@ public class ItemDtoOut {
     private Boolean available;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    private UserDto owner;
+    private UserResponse owner;
 
-    private BookingShortDto lastBooking;
+    private BookingResponse lastBooking;
 
-    private BookingShortDto nextBooking;
+    private BookingResponse nextBooking;
 
-    private List<CommentDto> comments;
+    private List<CommentResponse> comments;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private Long requestId;
 
-    public ItemDtoOut(Long id, String name, String description, Boolean available, BookingShortDto lastBooking,
-                      BookingShortDto nextBooking, List<CommentDto> comments) {
+    public ItemDtoOut(Long id, String name, String description, Boolean available, BookingResponse lastBooking,
+                      BookingResponse nextBooking, List<CommentResponse> comments) {
         this.id = id;
         this.name = name;
         this.description = description;

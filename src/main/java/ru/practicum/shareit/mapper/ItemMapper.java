@@ -1,12 +1,9 @@
 package ru.practicum.shareit.mapper;
 
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.booking.dto.BookingShortDto;
-import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.item.dto.ItemDtoIn;
 import ru.practicum.shareit.item.dto.ItemDtoOut;
 import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.item.model.ItemWithBooking;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,42 +34,5 @@ public class ItemMapper {
         return items.stream()
                 .map(ItemMapper::toItemDtoOut)
                 .collect(Collectors.toList());
-    }
-
-    public static ItemWithBooking toItemWithBooking(Item item) {
-        return new ItemWithBooking(
-                item.getId(),
-                item.getName(),
-                item.getDescription(),
-                item.getAvailable()
-        );
-    }
-
-    public static ItemDtoOut toItemWithBookingDto(ItemWithBooking itemWithBooking) {
-        return new ItemDtoOut(
-                itemWithBooking.getId(),
-                itemWithBooking.getName(),
-                itemWithBooking.getDescription(),
-                itemWithBooking.getAvailable(),
-                ItemMapper.toBookingShortDto(itemWithBooking.getLastBooking()),
-                ItemMapper.toBookingShortDto(itemWithBooking.getNextBooking()),
-                CommentMapper.toCommentDtoList(itemWithBooking.getComments())
-        );
-    }
-
-    public static List<ItemDtoOut> toItemWithBookingDtoList(List<ItemWithBooking> itemWithBooking) {
-        return itemWithBooking.stream()
-                .map(ItemMapper::toItemWithBookingDto)
-                .collect(Collectors.toList());
-    }
-
-    public static BookingShortDto toBookingShortDto(Booking booking) {
-        if (booking == null) {
-            return null;
-        }
-        return new BookingShortDto(
-                booking.getId(),
-                booking.getBooker().getId()
-        );
     }
 }

@@ -9,12 +9,14 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.comments.CommentRepository;
+import ru.practicum.shareit.comments.model.Comment;
 import ru.practicum.shareit.exception.ItemNotFoundException;
 import ru.practicum.shareit.exception.UserHaveNoSuchItemException;
 import ru.practicum.shareit.item.dto.ItemDtoIn;
 import ru.practicum.shareit.item.dto.ItemDtoOut;
 import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.item.model.ItemWithBooking;
+import ru.practicum.shareit.mapper.BookingMapper;
+import ru.practicum.shareit.mapper.CommentMapper;
 import ru.practicum.shareit.mapper.ItemMapper;
 import ru.practicum.shareit.request.ItemRequestService;
 import ru.practicum.shareit.user.UserService;
@@ -22,7 +24,6 @@ import ru.practicum.shareit.user.UserService;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -48,23 +49,22 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public ItemDtoOut getItemDtoByIdForAll(long itemId, long userId) {
         Item item = getItemById(itemId);
-        ItemWithBooking itemWithBooking = ItemMapper.toItemWithBooking(item);
+        ItemDtoOut itemDtoOut = ItemMapper.toItemDtoOut(item);
         if (item.getOwner().getId() == userId) {
-            setBookings(itemWithBooking);
+            setBookings(itemDtoOut);
         }
-        itemWithBooking.setComments(commentRepository.findAllByItemId(itemId));
-        return ItemMapper.toItemWithBookingDto(itemWithBooking);
+        List<Comment> commentList = commentRepository.findAllByItemId(itemId);
+        itemDtoOut.setComments(CommentMapper.toCommentResponseList(commentList));
+        return itemDtoOut;
     }
 
     @Override
     public List<ItemDtoOut> getAllUserItemsDto(Long userId, int from, int size) {
         PageRequest page = PageRequest.of(from > 0 ? from / size : 0, size);
         List<Item> response = itemRepository.findAllByOwnerIdOrderByIdAsc(userId, page);
-        List<ItemWithBooking> itemsWithBookingList = response.stream()
-                .map(ItemMapper::toItemWithBooking)
-                .collect(Collectors.toList());
-        itemsWithBookingList.forEach(this::setBookings);
-        return ItemMapper.toItemWithBookingDtoList(itemsWithBookingList);
+        List<ItemDtoOut> itemDtoOutList = ItemMapper.toItemDtoOutList(response);
+        itemDtoOutList.forEach(this::setBookings);
+        return itemDtoOutList;
     }
 
     @Override
@@ -93,7 +93,7 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public ItemDtoOut updateItem(long userId, long itemId, ItemDtoIn updateItemDtoIn) {
         Item updateItem = ItemMapper.toEntity(updateItemDtoIn);
-        userService.getUserDtoById(userId);
+        userService.getUserResponseById(userId);
         Item item = checkUserItem(userId, itemId);
         if (updateItem.getName() != null) {
             item.setName(updateItem.getName());
@@ -140,13 +140,13 @@ public class ItemServiceImpl implements ItemService {
         return itemOptional.get();
     }
 
-    private void setBookings(ItemWithBooking itemWithBooking) {
-        long itemId = itemWithBooking.getId();
+    private void setBookings(ItemDtoOut itemDtoOut) {
+        long itemId = itemDtoOut.getId();
         List<Booking> last = bookingRepository.findLastBookingForItem(itemId);
         List<Booking> next = bookingRepository.findNextBookingForItem(itemId);
-        itemWithBooking.setLastBooking(last.size() != 0 ? last.get(0) : null);
+        itemDtoOut.setLastBooking(BookingMapper.toBookingResponseShort(last.size() != 0 ? last.get(0) : null));
         if (last.size() != 0) {
-            itemWithBooking.setNextBooking(next.size() != 0 ? next.get(0) : null);
+            itemDtoOut.setNextBooking(BookingMapper.toBookingResponseShort(next.size() != 0 ? next.get(0) : null));
         }
     }
 }

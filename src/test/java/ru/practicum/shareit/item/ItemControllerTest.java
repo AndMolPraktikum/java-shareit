@@ -7,7 +7,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.practicum.shareit.comments.CommentService;
-import ru.practicum.shareit.comments.dto.CommentDto;
+import ru.practicum.shareit.comments.dto.CommentRequest;
+import ru.practicum.shareit.comments.dto.CommentResponse;
 import ru.practicum.shareit.item.dto.ItemDtoIn;
 import ru.practicum.shareit.item.dto.ItemDtoOut;
 
@@ -91,14 +92,14 @@ class ItemControllerTest {
     void createComment_whenInvoked_thenSaveComment() {
         long itemId = 1L;
         long userId = 1L;
-        CommentDto commentDto = new CommentDto("Комментарий от юзер 1");
-        CommentDto commentOut = new CommentDto(1L, "Комментарий от юзер 1", "User 1", LocalDateTime.now());
+        CommentRequest commentRequest = new CommentRequest("Комментарий от юзер 1");
+        CommentResponse commentOut = new CommentResponse(1L, "Комментарий от юзер 1", "User 1", LocalDateTime.now());
 
-        when(commentService.create(itemId, userId, commentDto)).thenReturn(commentOut);
+        when(commentService.create(itemId, userId, commentRequest)).thenReturn(commentOut);
 
-        CommentDto response = itemController.createComment(commentDto, userId, userId);
+        CommentResponse response = itemController.createComment(commentRequest, userId, userId);
         assertEquals(commentOut, response);
-        verify(commentService).create(itemId, userId, commentDto);
+        verify(commentService).create(itemId, userId, commentRequest);
     }
 
     @SneakyThrows

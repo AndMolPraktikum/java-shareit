@@ -1,4 +1,4 @@
-package ru.practicum.shareit.comments.config;
+package ru.practicum.shareit.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;

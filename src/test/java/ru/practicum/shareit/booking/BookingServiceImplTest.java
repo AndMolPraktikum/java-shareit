@@ -6,8 +6,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
-import ru.practicum.shareit.booking.dto.BookingDtoIn;
-import ru.practicum.shareit.booking.dto.BookingDtoOut;
+import ru.practicum.shareit.booking.dto.BookingRequest;
+import ru.practicum.shareit.booking.dto.BookingResponse;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.BookingRequestParams;
 import ru.practicum.shareit.enums.BookingStatus;
@@ -48,7 +48,7 @@ class BookingServiceImplTest {
 
     @Test
     void create_whenUserAndItemFoundAndDateCorrect_thenBookingCreate() {
-        BookingDtoIn bookingDtoIn = new BookingDtoIn(
+        BookingRequest bookingRequest = new BookingRequest(
                 1L,
                 LocalDateTime.now().plusSeconds(1),
                 LocalDateTime.now().plusSeconds(2)
@@ -67,20 +67,20 @@ class BookingServiceImplTest {
                 BookingStatus.WAITING
         );
         when(userService.getUserById(bookerId)).thenReturn(user);
-        when(itemService.getItemById(bookingDtoIn.getItemId())).thenReturn(item);
+        when(itemService.getItemById(bookingRequest.getItemId())).thenReturn(item);
         when(bookingRepository.save(any(Booking.class))).thenReturn(booking);
 
-        BookingDtoOut response = bookingService.create(bookingDtoIn, bookerId);
+        BookingResponse response = bookingService.create(bookingRequest, bookerId);
 
-        assertEquals(BookingMapper.toBookingResponseDto(booking), response);
+        assertEquals(BookingMapper.toBookingResponse(booking), response);
         verify(userService).getUserById(bookerId);
-        verify(itemService).getItemById(bookingDtoIn.getItemId());
+        verify(itemService).getItemById(bookingRequest.getItemId());
         verify(bookingRepository).save(any(Booking.class));
     }
 
     @Test
     void create_whenStartAfterEnd_thenBookingWrongTimeExceptionThrown() {
-        BookingDtoIn bookingDtoIn = new BookingDtoIn(
+        BookingRequest bookingRequest = new BookingRequest(
                 1L,
                 LocalDateTime.now().plusSeconds(2),
                 LocalDateTime.now().plusSeconds(1)
@@ -92,22 +92,22 @@ class BookingServiceImplTest {
                 "Возит сама", true, user2, null);
         String message = "Время окончания бронирования не может быть раньше времени начала бронирования";
         when(userService.getUserById(bookerId)).thenReturn(user);
-        when(itemService.getItemById(bookingDtoIn.getItemId())).thenReturn(item);
+        when(itemService.getItemById(bookingRequest.getItemId())).thenReturn(item);
 
         BookingWrongTimeException response = assertThrows(BookingWrongTimeException.class,
-                () -> bookingService.create(bookingDtoIn, bookerId));
+                () -> bookingService.create(bookingRequest, bookerId));
 
         String responseMessage = response.getMessage();
         assertEquals(message, responseMessage);
         verify(userService).getUserById(bookerId);
-        verify(itemService).getItemById(bookingDtoIn.getItemId());
+        verify(itemService).getItemById(bookingRequest.getItemId());
         verify(bookingRepository, never()).save(any(Booking.class));
     }
 
     @Test
     void create_whenStartEqualsEnd_thenBookingWrongTimeExceptionThrown() {
         LocalDateTime localDateTime = LocalDateTime.now();
-        BookingDtoIn bookingDtoIn = new BookingDtoIn(
+        BookingRequest bookingRequest = new BookingRequest(
                 1L,
                 localDateTime.plusSeconds(1),
                 localDateTime.plusSeconds(1)
@@ -119,21 +119,21 @@ class BookingServiceImplTest {
                 "Возит сама", true, user2, null);
         String message = "Время начала и окончания бронирования не может быть равно";
         when(userService.getUserById(bookerId)).thenReturn(user);
-        when(itemService.getItemById(bookingDtoIn.getItemId())).thenReturn(item);
+        when(itemService.getItemById(bookingRequest.getItemId())).thenReturn(item);
 
         BookingWrongTimeException response = assertThrows(BookingWrongTimeException.class,
-                () -> bookingService.create(bookingDtoIn, bookerId));
+                () -> bookingService.create(bookingRequest, bookerId));
 
         String responseMessage = response.getMessage();
         assertEquals(message, responseMessage);
         verify(userService).getUserById(bookerId);
-        verify(itemService).getItemById(bookingDtoIn.getItemId());
+        verify(itemService).getItemById(bookingRequest.getItemId());
         verify(bookingRepository, never()).save(any(Booking.class));
     }
 
     @Test
     void create_whenStartBeforeCurrentTime_thenBookingWrongTimeExceptionThrown() {
-        BookingDtoIn bookingDtoIn = new BookingDtoIn(
+        BookingRequest bookingRequest = new BookingRequest(
                 1L,
                 LocalDateTime.now().plusSeconds(1),
                 LocalDateTime.now().minusSeconds(1)
@@ -145,21 +145,21 @@ class BookingServiceImplTest {
                 "Возит сама", true, user2, null);
         String message = "Время начала или окончания бронирования не может быть раньше текущего времени";
         when(userService.getUserById(bookerId)).thenReturn(user);
-        when(itemService.getItemById(bookingDtoIn.getItemId())).thenReturn(item);
+        when(itemService.getItemById(bookingRequest.getItemId())).thenReturn(item);
 
         BookingWrongTimeException response = assertThrows(BookingWrongTimeException.class,
-                () -> bookingService.create(bookingDtoIn, bookerId));
+                () -> bookingService.create(bookingRequest, bookerId));
 
         String responseMessage = response.getMessage();
         assertEquals(message, responseMessage);
         verify(userService).getUserById(bookerId);
-        verify(itemService).getItemById(bookingDtoIn.getItemId());
+        verify(itemService).getItemById(bookingRequest.getItemId());
         verify(bookingRepository, never()).save(any(Booking.class));
     }
 
     @Test
     void create_whenEndBeforeCurrentTime_thenBookingWrongTimeExceptionThrown() {
-        BookingDtoIn bookingDtoIn = new BookingDtoIn(
+        BookingRequest bookingRequest = new BookingRequest(
                 1L,
                 LocalDateTime.now().minusSeconds(1),
                 LocalDateTime.now().plusSeconds(1)
@@ -171,21 +171,21 @@ class BookingServiceImplTest {
                 "Возит сама", true, user2, null);
         String message = "Время начала или окончания бронирования не может быть раньше текущего времени";
         when(userService.getUserById(bookerId)).thenReturn(user);
-        when(itemService.getItemById(bookingDtoIn.getItemId())).thenReturn(item);
+        when(itemService.getItemById(bookingRequest.getItemId())).thenReturn(item);
 
         BookingWrongTimeException response = assertThrows(BookingWrongTimeException.class,
-                () -> bookingService.create(bookingDtoIn, bookerId));
+                () -> bookingService.create(bookingRequest, bookerId));
 
         String responseMessage = response.getMessage();
         assertEquals(message, responseMessage);
         verify(userService).getUserById(bookerId);
-        verify(itemService).getItemById(bookingDtoIn.getItemId());
+        verify(itemService).getItemById(bookingRequest.getItemId());
         verify(bookingRepository, never()).save(any(Booking.class));
     }
 
     @Test
     void create_whenItemUnavailable_thenItemIsUnavailableExceptionThrown() {
-        BookingDtoIn bookingDtoIn = new BookingDtoIn(
+        BookingRequest bookingRequest = new BookingRequest(
                 1L,
                 LocalDateTime.now().plusSeconds(1),
                 LocalDateTime.now().plusSeconds(2)
@@ -197,21 +197,21 @@ class BookingServiceImplTest {
                 "Возит сама", false, user2, null);
         String message = "Запрашиваемая вещь с ID: 1 недоступна для бронирования";
         when(userService.getUserById(bookerId)).thenReturn(user);
-        when(itemService.getItemById(bookingDtoIn.getItemId())).thenReturn(item);
+        when(itemService.getItemById(bookingRequest.getItemId())).thenReturn(item);
 
         ItemIsUnavailableException response = assertThrows(ItemIsUnavailableException.class,
-                () -> bookingService.create(bookingDtoIn, bookerId));
+                () -> bookingService.create(bookingRequest, bookerId));
 
         String responseMessage = response.getMessage();
         assertEquals(message, responseMessage);
         verify(userService).getUserById(bookerId);
-        verify(itemService).getItemById(bookingDtoIn.getItemId());
+        verify(itemService).getItemById(bookingRequest.getItemId());
         verify(bookingRepository, never()).save(any(Booking.class));
     }
 
     @Test
     void create_whenRequesterIsOwner_thenItemNotFoundExceptionThrown() {
-        BookingDtoIn bookingDtoIn = new BookingDtoIn(
+        BookingRequest bookingRequest = new BookingRequest(
                 1L,
                 LocalDateTime.now().plusSeconds(1),
                 LocalDateTime.now().plusSeconds(2)
@@ -222,21 +222,21 @@ class BookingServiceImplTest {
                 "Возит сама", false, user, null);
         String message = "Вы пытаетесь забронировать собственную вещь!";
         when(userService.getUserById(bookerId)).thenReturn(user);
-        when(itemService.getItemById(bookingDtoIn.getItemId())).thenReturn(item);
+        when(itemService.getItemById(bookingRequest.getItemId())).thenReturn(item);
 
         ItemNotFoundException response = assertThrows(ItemNotFoundException.class,
-                () -> bookingService.create(bookingDtoIn, bookerId));
+                () -> bookingService.create(bookingRequest, bookerId));
 
         String responseMessage = response.getMessage();
         assertEquals(message, responseMessage);
         verify(userService).getUserById(bookerId);
-        verify(itemService).getItemById(bookingDtoIn.getItemId());
+        verify(itemService).getItemById(bookingRequest.getItemId());
         verify(bookingRepository, never()).save(any(Booking.class));
     }
 
     @Test
     void create_whenItemIsAlreadyBooked_thenItemIsUnavailableExceptionThrown() {
-        BookingDtoIn brd = new BookingDtoIn(
+        BookingRequest brd = new BookingRequest(
                 1L,
                 LocalDateTime.now().plusSeconds(1),
                 LocalDateTime.now().plusSeconds(2)
@@ -288,9 +288,9 @@ class BookingServiceImplTest {
         when(itemService.checkUserItem(ownerId, booking.getItem().getId())).thenReturn(null);
         when(bookingRepository.save(any(Booking.class))).thenReturn(bookingOut);
 
-        BookingDtoOut response = bookingService.updateBookingStatus(bookingId, approved, ownerId);
+        BookingResponse response = bookingService.updateBookingStatus(bookingId, approved, ownerId);
 
-        assertEquals(BookingMapper.toBookingResponseDto(bookingOut), response);
+        assertEquals(BookingMapper.toBookingResponse(bookingOut), response);
         verify(bookingRepository).findById(bookingId);
         verify(itemService).checkUserItem(ownerId, booking.getItem().getId());
         verify(bookingRepository).save(any(Booking.class));
@@ -324,9 +324,9 @@ class BookingServiceImplTest {
         when(itemService.checkUserItem(ownerId, booking.getItem().getId())).thenReturn(null);
         when(bookingRepository.save(any(Booking.class))).thenReturn(bookingOut);
 
-        BookingDtoOut response = bookingService.updateBookingStatus(bookingId, approved, ownerId);
+        BookingResponse response = bookingService.updateBookingStatus(bookingId, approved, ownerId);
 
-        assertEquals(BookingMapper.toBookingResponseDto(bookingOut), response);
+        assertEquals(BookingMapper.toBookingResponse(bookingOut), response);
         verify(bookingRepository).findById(bookingId);
         verify(itemService).checkUserItem(ownerId, booking.getItem().getId());
         verify(bookingRepository).save(any(Booking.class));
@@ -369,14 +369,14 @@ class BookingServiceImplTest {
                 new User(1L, "booker", "booker@yandex.ru"),
                 APPROVED
         );
-        when(userService.getUserDtoById(userId)).thenReturn(null);
+        when(userService.getUserById(userId)).thenReturn(null);
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(bookingOut));
 
-        BookingDtoOut response = bookingService.getBookingByIdForOwnerOrAuthor(bookingId, userId);
+        BookingResponse response = bookingService.getBookingByIdForOwnerOrAuthor(bookingId, userId);
 
-        assertEquals(BookingMapper.toBookingResponseDto(bookingOut), response);
+        assertEquals(BookingMapper.toBookingResponse(bookingOut), response);
         verify(bookingRepository).findById(bookingId);
-        verify(userService).getUserDtoById(userId);
+        verify(userService).getUserById(userId);
     }
 
     @Test
@@ -393,27 +393,27 @@ class BookingServiceImplTest {
                 new User(1L, "booker", "booker@yandex.ru"),
                 APPROVED
         );
-        when(userService.getUserDtoById(userId)).thenReturn(null);
+        when(userService.getUserById(userId)).thenReturn(null);
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(bookingOut));
 
-        BookingDtoOut response = bookingService.getBookingByIdForOwnerOrAuthor(bookingId, userId);
+        BookingResponse response = bookingService.getBookingByIdForOwnerOrAuthor(bookingId, userId);
 
-        assertEquals(BookingMapper.toBookingResponseDto(bookingOut), response);
+        assertEquals(BookingMapper.toBookingResponse(bookingOut), response);
         verify(bookingRepository).findById(bookingId);
-        verify(userService).getUserDtoById(userId);
+        verify(userService).getUserById(userId);
     }
 
     @Test
     void getBookingByIdForOwnerOrAuthor_whenBookingNotFound_thenBookingNotFoundExceptionThrown() {
         long bookingId = 1L;
         long userId = 2L;
-        when(userService.getUserDtoById(userId)).thenReturn(null);
+        when(userService.getUserById(userId)).thenReturn(null);
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.empty());
 
         assertThrows(BookingNotFoundException.class, () -> bookingService
                 .getBookingByIdForOwnerOrAuthor(bookingId, userId));
 
-        verify(userService).getUserDtoById(userId);
+        verify(userService).getUserById(userId);
         verify(bookingRepository).findById(bookingId);
     }
 
@@ -431,13 +431,13 @@ class BookingServiceImplTest {
                 new User(1L, "booker", "booker@yandex.ru"),
                 APPROVED
         );
-        when(userService.getUserDtoById(userId)).thenReturn(null);
+        when(userService.getUserById(userId)).thenReturn(null);
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(bookingOut));
 
         assertThrows(UserHasNoLinkBookingOrItemException.class, () -> bookingService
                 .getBookingByIdForOwnerOrAuthor(bookingId, userId));
 
-        verify(userService).getUserDtoById(userId);
+        verify(userService).getUserById(userId);
         verify(bookingRepository).findById(bookingId);
     }
 
@@ -464,13 +464,13 @@ class BookingServiceImplTest {
         );
         List<Booking> bookingList = List.of(booking1, booking2);
         PageRequest page = PageRequest.of(brp.getFrom(), brp.getSize());
-        when(userService.getUserDtoById(brp.getUserId())).thenReturn(null);
+        when(userService.getUserById(brp.getUserId())).thenReturn(null);
         when(bookingRepository.findByBookerIdOrderByStartDesc(brp.getUserId(), page)).thenReturn(bookingList);
 
-        List<BookingDtoOut> responseList = bookingService.getAllUserBookings(brp);
+        List<BookingResponse> responseList = bookingService.getAllUserBookings(brp);
 
-        assertEquals((BookingMapper.toBookingResponseDtoList(bookingList)).size(), responseList.size());
-        verify(userService).getUserDtoById(anyLong());
+        assertEquals((BookingMapper.toBookingResponseList(bookingList)).size(), responseList.size());
+        verify(userService).getUserById(anyLong());
         verify(bookingRepository).findByBookerIdOrderByStartDesc(brp.getUserId(), page);
     }
 
@@ -495,14 +495,14 @@ class BookingServiceImplTest {
                 booker,
                 APPROVED);
         List<Booking> bookingList = List.of(booking1, booking2);
-        when(userService.getUserDtoById(brp.getUserId())).thenReturn(null);
+        when(userService.getUserById(brp.getUserId())).thenReturn(null);
         when(bookingRepository.findByBookerIdCurrent(eq(brp.getUserId()), any(PageRequest.class)))
                 .thenReturn(bookingList);
 
-        List<BookingDtoOut> responseList = bookingService.getAllUserBookings(brp);
+        List<BookingResponse> responseList = bookingService.getAllUserBookings(brp);
 
-        assertEquals((BookingMapper.toBookingResponseDtoList(bookingList)).size(), responseList.size());
-        verify(userService).getUserDtoById(anyLong());
+        assertEquals((BookingMapper.toBookingResponseList(bookingList)).size(), responseList.size());
+        verify(userService).getUserById(anyLong());
         verify(bookingRepository).findByBookerIdCurrent(eq(brp.getUserId()), any(PageRequest.class));
     }
 
@@ -527,14 +527,14 @@ class BookingServiceImplTest {
                 booker,
                 APPROVED);
         List<Booking> bookingList = List.of(booking1, booking2);
-        when(userService.getUserDtoById(brp.getUserId())).thenReturn(null);
+        when(userService.getUserById(brp.getUserId())).thenReturn(null);
         when(bookingRepository.findByBookerIdPast(eq(brp.getUserId()), any(PageRequest.class)))
                 .thenReturn(bookingList);
 
-        List<BookingDtoOut> responseList = bookingService.getAllUserBookings(brp);
+        List<BookingResponse> responseList = bookingService.getAllUserBookings(brp);
 
-        assertEquals((BookingMapper.toBookingResponseDtoList(bookingList)).size(), responseList.size());
-        verify(userService).getUserDtoById(anyLong());
+        assertEquals((BookingMapper.toBookingResponseList(bookingList)).size(), responseList.size());
+        verify(userService).getUserById(anyLong());
         verify(bookingRepository).findByBookerIdPast(eq(brp.getUserId()), any(PageRequest.class));
     }
 
@@ -559,14 +559,14 @@ class BookingServiceImplTest {
                 booker,
                 APPROVED);
         List<Booking> bookingList = List.of(booking1, booking2);
-        when(userService.getUserDtoById(brp.getUserId())).thenReturn(null);
+        when(userService.getUserById(brp.getUserId())).thenReturn(null);
         when(bookingRepository.findByBookerIdFuture(eq(brp.getUserId()), any(PageRequest.class)))
                 .thenReturn(bookingList);
 
-        List<BookingDtoOut> responseList = bookingService.getAllUserBookings(brp);
+        List<BookingResponse> responseList = bookingService.getAllUserBookings(brp);
 
-        assertEquals((BookingMapper.toBookingResponseDtoList(bookingList)).size(), responseList.size());
-        verify(userService).getUserDtoById(anyLong());
+        assertEquals((BookingMapper.toBookingResponseList(bookingList)).size(), responseList.size());
+        verify(userService).getUserById(anyLong());
         verify(bookingRepository).findByBookerIdFuture(eq(brp.getUserId()), any(PageRequest.class));
     }
 
@@ -591,14 +591,14 @@ class BookingServiceImplTest {
                 booker,
                 APPROVED);
         List<Booking> bookingList = List.of(booking1, booking2);
-        when(userService.getUserDtoById(brp.getUserId())).thenReturn(null);
+        when(userService.getUserById(brp.getUserId())).thenReturn(null);
         when(bookingRepository.findByBookerIdWaiting(eq(brp.getUserId()), any(PageRequest.class)))
                 .thenReturn(bookingList);
 
-        List<BookingDtoOut> responseList = bookingService.getAllUserBookings(brp);
+        List<BookingResponse> responseList = bookingService.getAllUserBookings(brp);
 
-        assertEquals((BookingMapper.toBookingResponseDtoList(bookingList)).size(), responseList.size());
-        verify(userService).getUserDtoById(anyLong());
+        assertEquals((BookingMapper.toBookingResponseList(bookingList)).size(), responseList.size());
+        verify(userService).getUserById(anyLong());
         verify(bookingRepository).findByBookerIdWaiting(eq(brp.getUserId()), any(PageRequest.class));
     }
 
@@ -623,35 +623,35 @@ class BookingServiceImplTest {
                 booker,
                 APPROVED);
         List<Booking> bookingList = List.of(booking1, booking2);
-        when(userService.getUserDtoById(brp.getUserId())).thenReturn(null);
+        when(userService.getUserById(brp.getUserId())).thenReturn(null);
         when(bookingRepository.findByBookerIdRejected(eq(brp.getUserId()), any(PageRequest.class)))
                 .thenReturn(bookingList);
 
-        List<BookingDtoOut> responseList = bookingService.getAllUserBookings(brp);
+        List<BookingResponse> responseList = bookingService.getAllUserBookings(brp);
 
-        assertEquals((BookingMapper.toBookingResponseDtoList(bookingList)).size(), responseList.size());
-        verify(userService).getUserDtoById(anyLong());
+        assertEquals((BookingMapper.toBookingResponseList(bookingList)).size(), responseList.size());
+        verify(userService).getUserById(anyLong());
         verify(bookingRepository).findByBookerIdRejected(eq(brp.getUserId()), any(PageRequest.class));
     }
 
     @Test
     void getAllUserBookings_whenStateUnknown_thenFailStateExceptionThrown() {
         BookingRequestParams brp = new BookingRequestParams(States.UNSUPPORTED_STATUS, 1L, 0, 5);
-        when(userService.getUserDtoById(brp.getUserId())).thenReturn(null);
+        when(userService.getUserById(brp.getUserId())).thenReturn(null);
 
         assertThrows(FailStateException.class, () -> bookingService.getAllUserBookings(brp));
 
-        verify(userService).getUserDtoById(anyLong());
+        verify(userService).getUserById(anyLong());
     }
 
     @Test
     void getAllUserBookings_whenStateUnknownAndFromEquals1_thenFailStateExceptionThrown() {
         BookingRequestParams brp = new BookingRequestParams(States.UNSUPPORTED_STATUS, 1L, 1, 5);
-        when(userService.getUserDtoById(brp.getUserId())).thenReturn(null);
+        when(userService.getUserById(brp.getUserId())).thenReturn(null);
 
         assertThrows(FailStateException.class, () -> bookingService.getAllUserBookings(brp));
 
-        verify(userService).getUserDtoById(anyLong());
+        verify(userService).getUserById(anyLong());
     }
 
     @Test
@@ -677,13 +677,13 @@ class BookingServiceImplTest {
         );
         List<Booking> bookingList = List.of(booking1, booking2);
         PageRequest page = PageRequest.of(brp.getFrom(), brp.getSize());
-        when(userService.getUserDtoById(anyLong())).thenReturn(null);
+        when(userService.getUserById(anyLong())).thenReturn(null);
         when(bookingRepository.findByOwnerIdAll(brp.getUserId(), page)).thenReturn(bookingList);
 
-        List<BookingDtoOut> responseList = bookingService.getAllOwnerBookings(brp);
+        List<BookingResponse> responseList = bookingService.getAllOwnerBookings(brp);
 
-        assertEquals((BookingMapper.toBookingResponseDtoList(bookingList)).size(), responseList.size());
-        verify(userService).getUserDtoById(anyLong());
+        assertEquals((BookingMapper.toBookingResponseList(bookingList)).size(), responseList.size());
+        verify(userService).getUserById(anyLong());
         verify(bookingRepository).findByOwnerIdAll(brp.getUserId(), page);
     }
 
@@ -708,14 +708,14 @@ class BookingServiceImplTest {
                 booker,
                 APPROVED);
         List<Booking> bookingList = List.of(booking1, booking2);
-        when(userService.getUserDtoById(anyLong())).thenReturn(null);
+        when(userService.getUserById(anyLong())).thenReturn(null);
         when(bookingRepository.findByOwnerIdCurrent(eq(brp.getUserId()), any(PageRequest.class)))
                 .thenReturn(bookingList);
 
-        List<BookingDtoOut> responseList = bookingService.getAllOwnerBookings(brp);
+        List<BookingResponse> responseList = bookingService.getAllOwnerBookings(brp);
 
-        assertEquals((BookingMapper.toBookingResponseDtoList(bookingList)).size(), responseList.size());
-        verify(userService).getUserDtoById(anyLong());
+        assertEquals((BookingMapper.toBookingResponseList(bookingList)).size(), responseList.size());
+        verify(userService).getUserById(anyLong());
         verify(bookingRepository).findByOwnerIdCurrent(eq(brp.getUserId()), any(PageRequest.class));
     }
 
@@ -740,14 +740,14 @@ class BookingServiceImplTest {
                 booker,
                 APPROVED);
         List<Booking> bookingList = List.of(booking1, booking2);
-        when(userService.getUserDtoById(anyLong())).thenReturn(null);
+        when(userService.getUserById(anyLong())).thenReturn(null);
         when(bookingRepository.findByOwnerIdPast(eq(brp.getUserId()), any(PageRequest.class)))
                 .thenReturn(bookingList);
 
-        List<BookingDtoOut> responseList = bookingService.getAllOwnerBookings(brp);
+        List<BookingResponse> responseList = bookingService.getAllOwnerBookings(brp);
 
-        assertEquals((BookingMapper.toBookingResponseDtoList(bookingList)).size(), responseList.size());
-        verify(userService).getUserDtoById(anyLong());
+        assertEquals((BookingMapper.toBookingResponseList(bookingList)).size(), responseList.size());
+        verify(userService).getUserById(anyLong());
         verify(bookingRepository).findByOwnerIdPast(eq(brp.getUserId()), any(PageRequest.class));
     }
 
@@ -772,14 +772,14 @@ class BookingServiceImplTest {
                 booker,
                 APPROVED);
         List<Booking> bookingList = List.of(booking1, booking2);
-        when(userService.getUserDtoById(anyLong())).thenReturn(null);
+        when(userService.getUserById(anyLong())).thenReturn(null);
         when(bookingRepository.findByOwnerIdFuture(eq(brp.getUserId()), any(PageRequest.class)))
                 .thenReturn(bookingList);
 
-        List<BookingDtoOut> responseList = bookingService.getAllOwnerBookings(brp);
+        List<BookingResponse> responseList = bookingService.getAllOwnerBookings(brp);
 
-        assertEquals((BookingMapper.toBookingResponseDtoList(bookingList)).size(), responseList.size());
-        verify(userService).getUserDtoById(anyLong());
+        assertEquals((BookingMapper.toBookingResponseList(bookingList)).size(), responseList.size());
+        verify(userService).getUserById(anyLong());
         verify(bookingRepository).findByOwnerIdFuture(eq(brp.getUserId()), any(PageRequest.class));
     }
 
@@ -804,14 +804,14 @@ class BookingServiceImplTest {
                 booker,
                 APPROVED);
         List<Booking> bookingList = List.of(booking1, booking2);
-        when(userService.getUserDtoById(anyLong())).thenReturn(null);
+        when(userService.getUserById(anyLong())).thenReturn(null);
         when(bookingRepository.findByOwnerIdWaiting(eq(brp.getUserId()), any(PageRequest.class)))
                 .thenReturn(bookingList);
 
-        List<BookingDtoOut> responseList = bookingService.getAllOwnerBookings(brp);
+        List<BookingResponse> responseList = bookingService.getAllOwnerBookings(brp);
 
-        assertEquals((BookingMapper.toBookingResponseDtoList(bookingList)).size(), responseList.size());
-        verify(userService).getUserDtoById(anyLong());
+        assertEquals((BookingMapper.toBookingResponseList(bookingList)).size(), responseList.size());
+        verify(userService).getUserById(anyLong());
         verify(bookingRepository).findByOwnerIdWaiting(eq(brp.getUserId()), any(PageRequest.class));
     }
 
@@ -836,34 +836,34 @@ class BookingServiceImplTest {
                 booker,
                 APPROVED);
         List<Booking> bookingList = List.of(booking1, booking2);
-        when(userService.getUserDtoById(anyLong())).thenReturn(null);
+        when(userService.getUserById(anyLong())).thenReturn(null);
         when(bookingRepository.findByOwnerIdRejected(eq(brp.getUserId()), any(PageRequest.class)))
                 .thenReturn(bookingList);
 
-        List<BookingDtoOut> responseList = bookingService.getAllOwnerBookings(brp);
+        List<BookingResponse> responseList = bookingService.getAllOwnerBookings(brp);
 
-        assertEquals((BookingMapper.toBookingResponseDtoList(bookingList)).size(), responseList.size());
-        verify(userService).getUserDtoById(anyLong());
+        assertEquals((BookingMapper.toBookingResponseList(bookingList)).size(), responseList.size());
+        verify(userService).getUserById(anyLong());
         verify(bookingRepository).findByOwnerIdRejected(eq(brp.getUserId()), any(PageRequest.class));
     }
 
     @Test
     void getAllOwnerBookings_whenStateUnknown_thenFailStateExceptionThrown() {
         BookingRequestParams brp = new BookingRequestParams(States.UNSUPPORTED_STATUS, 1L, 0, 5);
-        when(userService.getUserDtoById(anyLong())).thenReturn(null);
+        when(userService.getUserById(anyLong())).thenReturn(null);
 
         assertThrows(FailStateException.class, () -> bookingService.getAllOwnerBookings(brp));
 
-        verify(userService).getUserDtoById(anyLong());
+        verify(userService).getUserById(anyLong());
     }
 
     @Test
     void getAllOwnerBookings_whenStateUnknownAndFromEquals1_thenFailStateExceptionThrown() {
         BookingRequestParams brp = new BookingRequestParams(States.UNSUPPORTED_STATUS, 1L, 1, 5);
-        when(userService.getUserDtoById(anyLong())).thenReturn(null);
+        when(userService.getUserById(anyLong())).thenReturn(null);
 
         assertThrows(FailStateException.class, () -> bookingService.getAllOwnerBookings(brp));
 
-        verify(userService).getUserDtoById(anyLong());
+        verify(userService).getUserById(anyLong());
     }
 }

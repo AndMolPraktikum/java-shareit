@@ -5,7 +5,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.dto.UserRequest;
+import ru.practicum.shareit.user.dto.UserResponse;
 
 import java.util.List;
 
@@ -24,49 +25,50 @@ class UserControllerTest {
 
     @Test
     void getAllUsers_whenInvoked_thenResponseContainsListOfUserDtos() {
-        List<UserDto> userList = List.of(new UserDto(), new UserDto());
-        when(userService.getAllUsersDto()).thenReturn(userList);
+        List<UserResponse> userList = List.of(new UserResponse(), new UserResponse());
+        when(userService.getAllUsers()).thenReturn(userList);
 
-        List<UserDto> responseList = userController.getAllUsers();
+        List<UserResponse> responseList = userController.getAllUsers();
 
         assertEquals(userList.size(), responseList.size());
-        verify(userService).getAllUsersDto();
+        verify(userService).getAllUsers();
     }
 
     @Test
     void findUserById_whenUserFound_thenResponseContainsUserDto() {
         long userId = 1L;
-        UserDto userDto = new UserDto();
-        when(userService.getUserDtoById(userId)).thenReturn(userDto);
+        UserResponse userResponse = new UserResponse();
+        when(userService.getUserResponseById(userId)).thenReturn(userResponse);
 
-        UserDto response = userController.findUserById(userId);
+        UserResponse response = userController.findUserById(userId);
 
-        assertEquals(userDto, response);
-        verify(userService).getUserDtoById(userId);
+        assertEquals(userResponse, response);
+        verify(userService).getUserResponseById(userId);
     }
 
     @Test
     void create_whenInvoked_thenSaveUser() {
-        UserDto userDto = new UserDto();
-        when(userService.createUser(userDto)).thenReturn(userDto);
+        UserRequest userRequest = new UserRequest();
+        UserResponse userResponse = new UserResponse();
+        when(userService.createUser(userRequest)).thenReturn(userResponse);
 
-        UserDto response = userController.create(userDto);
+        UserResponse response = userController.create(userRequest);
 
-        assertEquals(userDto, response);
-        verify(userService).createUser(userDto);
+        assertEquals(userResponse, response);
+        verify(userService).createUser(userRequest);
     }
 
     @Test
     void update_whenInvoked_thenUpdateUser() {
         long userId = 1L;
-        UserDto updateUserDto = new UserDto("user100", "user100@yandex.ru");
-        UserDto updatedUserDto = new UserDto(1L, "user100", "user100@yandex.ru");
-        when(userService.updateUser(userId, updateUserDto)).thenReturn(updatedUserDto);
+        UserRequest userRequest = new UserRequest("user100", "user100@yandex.ru");
+        UserResponse updatedUserResponse = new UserResponse(1L, "user100", "user100@yandex.ru");
+        when(userService.updateUser(userId, userRequest)).thenReturn(updatedUserResponse);
 
-        UserDto response = userController.update(updateUserDto, userId);
+        UserResponse response = userController.update(userRequest, userId);
 
-        assertEquals(updatedUserDto, response);
-        verify(userService).updateUser(userId, updateUserDto);
+        assertEquals(updatedUserResponse, response);
+        verify(userService).updateUser(userId, userRequest);
     }
 
     @Test

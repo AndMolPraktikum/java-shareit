@@ -9,9 +9,8 @@ import javax.validation.constraints.NotBlank;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ItemRequestDtoIn {
+public class ItemRequestRequest {
 
     @NotBlank
     private String description;
-
 }

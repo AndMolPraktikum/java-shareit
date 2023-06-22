@@ -7,12 +7,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.practicum.shareit.booking.dto.BookingDtoIn;
-import ru.practicum.shareit.comments.dto.CommentDto;
+import ru.practicum.shareit.booking.dto.BookingRequest;
+import ru.practicum.shareit.comments.dto.CommentRequest;
 import ru.practicum.shareit.item.dto.ItemDtoIn;
 import ru.practicum.shareit.item.dto.ItemDtoOut;
 import ru.practicum.shareit.user.UserRepository;
-import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.dto.UserRequest;
+import ru.practicum.shareit.user.dto.UserResponse;
 import ru.practicum.shareit.user.model.User;
 
 import java.time.LocalDateTime;
@@ -63,15 +64,15 @@ public class ItemControllerIT {
     @SneakyThrows
     @Test
     void findAllUserItems_whenInvoked_thenResponseContainsListOfItems() {
-        UserDto user2Dto = new UserDto("user2", "user2@user.com");
+        UserRequest userRequest2 = new UserRequest("user2", "user2@user.com");
         String response = mockMvc.perform(post("/users")
-                        .content(objectMapper.writeValueAsString(user2Dto))
+                        .content(objectMapper.writeValueAsString(userRequest2))
                         .contentType("application/json"))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        long userId = objectMapper.readValue(response, UserDto.class).getId();
+        long userId = objectMapper.readValue(response, UserResponse.class).getId();
 
         ItemDtoIn itemDto = new ItemDtoIn("Швабра", "Моет сама", true);
         mockMvc.perform(post("/items")
@@ -93,15 +94,15 @@ public class ItemControllerIT {
     @SneakyThrows
     @Test
     void searchItemByText_whenItemsExist_thenResponseContainsListOfItems() {
-        UserDto user3Dto = new UserDto("user3", "user3@user.com");
+        UserRequest userRequest3 = new UserRequest("user3", "user3@user.com");
         String response = mockMvc.perform(post("/users")
-                        .content(objectMapper.writeValueAsString(user3Dto))
+                        .content(objectMapper.writeValueAsString(userRequest3))
                         .contentType("application/json"))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        long userId = objectMapper.readValue(response, UserDto.class).getId();
+        long userId = objectMapper.readValue(response, UserResponse.class).getId();
 
         ItemDtoIn itemDto = new ItemDtoIn("Дрель", "Сверлит сама", true);
 
@@ -119,15 +120,15 @@ public class ItemControllerIT {
     @SneakyThrows
     @Test
     void createItem_whenInvoked_thenCreateItem() {
-        UserDto user4Dto = new UserDto("user4", "user4@user.com");
+        UserRequest userRequest4 = new UserRequest("user4", "user4@user.com");
         String response = mockMvc.perform(post("/users")
-                        .content(objectMapper.writeValueAsString(user4Dto))
+                        .content(objectMapper.writeValueAsString(userRequest4))
                         .contentType("application/json"))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        long userId = objectMapper.readValue(response, UserDto.class).getId();
+        long userId = objectMapper.readValue(response, UserResponse.class).getId();
 
         ItemDtoIn itemDto = new ItemDtoIn("Лопата", "Копает сама", true);
         mockMvc.perform(post("/items")
@@ -142,15 +143,15 @@ public class ItemControllerIT {
     @SneakyThrows
     @Test
     void updateItem_whenInvoked_thenItemUpdated() {
-        UserDto user5Dto = new UserDto("user5", "user5@user.com");
+        UserRequest userRequest5 = new UserRequest("user5", "user5@user.com");
         String response = mockMvc.perform(post("/users")
-                        .content(objectMapper.writeValueAsString(user5Dto))
+                        .content(objectMapper.writeValueAsString(userRequest5))
                         .contentType("application/json"))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        long userId = objectMapper.readValue(response, UserDto.class).getId();
+        long userId = objectMapper.readValue(response, UserResponse.class).getId();
 
         ItemDtoIn itemDto = new ItemDtoIn("Садовая тачка", "Возит сама", true);
         String responseItem = mockMvc.perform(post("/items")
@@ -178,15 +179,15 @@ public class ItemControllerIT {
     @SneakyThrows
     @Test
     void deleteItem() {
-        UserDto user6Dto = new UserDto("user6", "user6@user.com");
+        UserRequest userRequest6 = new UserRequest("user6", "user6@user.com");
         String response = mockMvc.perform(post("/users")
-                        .content(objectMapper.writeValueAsString(user6Dto))
+                        .content(objectMapper.writeValueAsString(userRequest6))
                         .contentType("application/json"))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        long userId = objectMapper.readValue(response, UserDto.class).getId();
+        long userId = objectMapper.readValue(response, UserResponse.class).getId();
 
         ItemDtoIn itemDto = new ItemDtoIn("Видеокамера", "Снимает сама", true);
         String responseItem = mockMvc.perform(post("/items")
@@ -216,7 +217,7 @@ public class ItemControllerIT {
     @SneakyThrows
     @Test
     public void createComment_whenInvoked_thenCommentCreated() {
-        UserDto owner = new UserDto("owner", "owner@user.com");
+        UserRequest owner = new UserRequest("owner", "owner@user.com");
         String responseOwner = mockMvc.perform(post("/users")
                         .content(objectMapper.writeValueAsString(owner))
                         .contentType("application/json"))
@@ -224,7 +225,7 @@ public class ItemControllerIT {
                 .getResponse()
                 .getContentAsString();
 
-        long ownerId = objectMapper.readValue(responseOwner, UserDto.class).getId();
+        long ownerId = objectMapper.readValue(responseOwner, UserResponse.class).getId();
 
         ItemDtoIn itemDto = new ItemDtoIn("Швабра", "Моет сама", true);
         String responseItem = mockMvc.perform(post("/items")
@@ -237,7 +238,7 @@ public class ItemControllerIT {
 
         long itemId = objectMapper.readValue(responseItem, ItemDtoOut.class).getId();
 
-        UserDto booker = new UserDto("booker", "booker@user.com");
+        UserRequest booker = new UserRequest("booker", "booker@user.com");
         String responseBooker = mockMvc.perform(post("/users")
                         .content(objectMapper.writeValueAsString(booker))
                         .contentType("application/json"))
@@ -245,9 +246,9 @@ public class ItemControllerIT {
                 .getResponse()
                 .getContentAsString();
 
-        long bookerId = objectMapper.readValue(responseBooker, UserDto.class).getId();
+        long bookerId = objectMapper.readValue(responseBooker, UserResponse.class).getId();
 
-        BookingDtoIn brDto = new BookingDtoIn(itemId,
+        BookingRequest brDto = new BookingRequest(itemId,
                 LocalDateTime.now().plusSeconds(1),
                 LocalDateTime.now().plusSeconds(2));
 
@@ -262,10 +263,10 @@ public class ItemControllerIT {
 
         Thread.sleep(3000);
 
-        CommentDto commentDto = new CommentDto("Комментарий от юзера" + bookerId);
+        CommentRequest commentRequest = new CommentRequest("Комментарий от юзера" + bookerId);
         mockMvc.perform(post("/items/{itemId}/comment", itemId)
                         .header("X-Sharer-User-Id", bookerId)
-                        .content(objectMapper.writeValueAsString(commentDto))
+                        .content(objectMapper.writeValueAsString(commentRequest))
                         .contentType("application/json"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value("1"))

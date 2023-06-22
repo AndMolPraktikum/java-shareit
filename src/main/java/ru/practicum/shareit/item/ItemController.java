@@ -6,7 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.comments.CommentService;
-import ru.practicum.shareit.comments.dto.CommentDto;
+import ru.practicum.shareit.comments.dto.CommentRequest;
+import ru.practicum.shareit.comments.dto.CommentResponse;
 import ru.practicum.shareit.item.dto.ItemDtoIn;
 import ru.practicum.shareit.item.dto.ItemDtoOut;
 
@@ -70,14 +71,14 @@ public class ItemController {
     }
 
     @PostMapping("/{itemId}/comment")
-    public CommentDto createComment(@Valid @RequestBody CommentDto commentDto,
-                                    @PathVariable long itemId,
-                                    @RequestHeader("X-Sharer-User-Id") Long userId) {
+    public CommentResponse createComment(@Valid @RequestBody CommentRequest commentRequest,
+                                         @PathVariable long itemId,
+                                         @RequestHeader("X-Sharer-User-Id") Long userId) {
         log.info("Входящий запрос POST /items/{}/comment. ID пользователя: {}. " +
-                "CommentDto: {}", itemId, userId, commentDto);
-        final CommentDto createdCommentDto = commentService.create(itemId, userId, commentDto);
-        log.info("Исходящий ответ: {}", createdCommentDto);
-        return createdCommentDto;
+                "CommentDto: {}", itemId, userId, commentRequest);
+        final CommentResponse createdCommentResponse = commentService.create(itemId, userId, commentRequest);
+        log.info("Исходящий ответ: {}", createdCommentResponse);
+        return createdCommentResponse;
     }
 
 

@@ -4,7 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.dto.UserRequest;
+import ru.practicum.shareit.user.dto.UserResponse;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -19,35 +20,35 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
-    public List<UserDto> getAllUsers() {
+    public List<UserResponse> getAllUsers() {
         log.info("Входящий запрос GET /users.");
-        final List<UserDto> allUsersDto = userService.getAllUsersDto();
-        log.info("Исходящий ответ: {}", allUsersDto);
-        return allUsersDto;
+        final List<UserResponse> userResponseList = userService.getAllUsers();
+        log.info("Исходящий ответ: {}", userResponseList);
+        return userResponseList;
     }
 
     @GetMapping("/{id}")
-    public UserDto findUserById(@PathVariable Long id) {
+    public UserResponse findUserById(@PathVariable Long id) {
         log.info("Входящий запрос GET /users/{}.", id);
-        final UserDto userByIdDto = userService.getUserDtoById(id);
-        log.info("Исходящий ответ: {}", userByIdDto);
-        return userByIdDto;
+        final UserResponse userResponse = userService.getUserResponseById(id);
+        log.info("Исходящий ответ: {}", userResponse);
+        return userResponse;
     }
 
     @PostMapping
-    public UserDto create(@Valid @RequestBody UserDto userDto) {
-        log.info("Входящий запрос POST /users: {}", userDto);
-        final UserDto createdUserDto = userService.createUser(userDto);
-        log.info("Исходящий ответ: {}", createdUserDto);
-        return createdUserDto;
+    public UserResponse create(@Valid @RequestBody UserRequest userRequest) {
+        log.info("Входящий запрос POST /users: {}", userRequest);
+        final UserResponse createdUserResponse = userService.createUser(userRequest);
+        log.info("Исходящий ответ: {}", createdUserResponse);
+        return createdUserResponse;
     }
 
     @PatchMapping("/{id}")
-    public UserDto update(@RequestBody UserDto userDto, @PathVariable Long id) {
-        log.info("Входящий запрос PUT /users: {}", userDto);
-        final UserDto updatedUserDto = userService.updateUser(id, userDto);
-        log.info("Исходящий ответ: {}", updatedUserDto);
-        return updatedUserDto;
+    public UserResponse update(@RequestBody UserRequest userRequest, @PathVariable Long id) {
+        log.info("Входящий запрос PUT /users: {}", userRequest);
+        final UserResponse updatedUserResponse = userService.updateUser(id, userRequest);
+        log.info("Исходящий ответ: {}", updatedUserResponse);
+        return updatedUserResponse;
     }
 
     @DeleteMapping("/{userId}")

@@ -1,8 +1,8 @@
 package ru.practicum.shareit.mapper;
 
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.request.dto.ItemRequestDtoIn;
-import ru.practicum.shareit.request.dto.ItemRequestDtoOut;
+import ru.practicum.shareit.request.dto.ItemRequestRequest;
+import ru.practicum.shareit.request.dto.ItemRequestResponse;
 import ru.practicum.shareit.request.model.ItemRequest;
 
 import java.util.Collections;
@@ -12,26 +12,25 @@ import java.util.stream.Collectors;
 @Service
 public class ItemRequestMapper {
 
-    public static ItemRequest toEntity(ItemRequestDtoIn itemRequestDtoIn) {
+    public static ItemRequest toEntity(ItemRequestRequest itemRequestRequest) {
         return new ItemRequest(
-                itemRequestDtoIn.getDescription()
+                itemRequestRequest.getDescription()
         );
     }
 
-    public static ItemRequestDtoOut toItemRequestDtoOut(ItemRequest itemRequest) {
-        return new ItemRequestDtoOut(
+    public static ItemRequestResponse toItemRequestResponse(ItemRequest itemRequest) {
+        return new ItemRequestResponse(
                 itemRequest.getId(),
                 itemRequest.getDescription(),
-                UserMapper.toUserDto(itemRequest.getRequester()),
+                UserMapper.toUserResponse(itemRequest.getRequester()),
                 itemRequest.getCreated(),
                 Collections.emptyList()
         );
     }
 
-    public static List<ItemRequestDtoOut> toItemRequestDtoOutList(List<ItemRequest> itemRequestList) {
+    public static List<ItemRequestResponse> toItemRequestResponseList(List<ItemRequest> itemRequestList) {
         return itemRequestList.stream()
-                .map(ItemRequestMapper::toItemRequestDtoOut)
+                .map(ItemRequestMapper::toItemRequestResponse)
                 .collect(Collectors.toList());
     }
-
 }

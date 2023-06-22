@@ -11,8 +11,8 @@ import ru.practicum.shareit.item.ItemRepository;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.mapper.ItemMapper;
 import ru.practicum.shareit.mapper.ItemRequestMapper;
-import ru.practicum.shareit.request.dto.ItemRequestDtoIn;
-import ru.practicum.shareit.request.dto.ItemRequestDtoOut;
+import ru.practicum.shareit.request.dto.ItemRequestRequest;
+import ru.practicum.shareit.request.dto.ItemRequestResponse;
 import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.user.UserService;
 
@@ -35,20 +35,20 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     private ItemRepository itemRepository;
 
     @Override
-    public List<ItemRequestDtoOut> getAllUserItemRequestDtoOut(Long userId) {
+    public List<ItemRequestResponse> getAllUserItemRequest(Long userId) {
         userService.getUserById(userId);
         List<ItemRequest> allUserItemRequest = itemRequestRepository.findAllByRequesterIdOrderByCreatedDesc(userId);
-        List<ItemRequestDtoOut> allUserItemRequestDto = ItemRequestMapper.toItemRequestDtoOutList(allUserItemRequest);
-        allUserItemRequestDto.forEach(this::setResponsesList);
-        return allUserItemRequestDto;
+        List<ItemRequestResponse> allItemRequestResponses = ItemRequestMapper.toItemRequestResponseList(allUserItemRequest);
+        allItemRequestResponses.forEach(this::setResponsesList);
+        return allItemRequestResponses;
     }
 
     @Override
-    public List<ItemRequestDtoOut> getAllItemRequestDtoOut(Long userId, int from, int size) {
+    public List<ItemRequestResponse> getAllItemRequest(Long userId, int from, int size) {
         userService.getUserById(userId);
         PageRequest page = PageRequest.of(from > 0 ? from / size : 0, size);
         List<ItemRequest> itemRequestList = itemRequestRepository.findAllByRequesterIdNotOrderByCreatedDesc(page, userId);
-        List<ItemRequestDtoOut> irdoList = ItemRequestMapper.toItemRequestDtoOutList(itemRequestList);
+        List<ItemRequestResponse> irdoList = ItemRequestMapper.toItemRequestResponseList(itemRequestList);
         irdoList.forEach(this::setResponsesList);
         return irdoList;
     }
@@ -64,22 +64,22 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     }
 
     @Override
-    public ItemRequestDtoOut getItemRequestDtoOutById(long requestId, Long userId) {
+    public ItemRequestResponse getItemRequestResponseById(long requestId, Long userId) {
         userService.getUserById(userId);
-        ItemRequestDtoOut itemRequestDtoOut = ItemRequestMapper.toItemRequestDtoOut(getItemRequestById(requestId));
-        setResponsesList(itemRequestDtoOut);
-        return itemRequestDtoOut;
+        ItemRequestResponse itemRequestResponse = ItemRequestMapper.toItemRequestResponse(getItemRequestById(requestId));
+        setResponsesList(itemRequestResponse);
+        return itemRequestResponse;
     }
 
     @Transactional
     @Override
-    public ItemRequestDtoOut create(Long userId, ItemRequestDtoIn itemRequestDtoIn) {
-        ItemRequest itemRequest = ItemRequestMapper.toEntity(itemRequestDtoIn);
+    public ItemRequestResponse createItemRequest(Long userId, ItemRequestRequest itemRequestRequest) {
+        ItemRequest itemRequest = ItemRequestMapper.toEntity(itemRequestRequest);
         itemRequest.setRequester(userService.getUserById(userId));
-        return ItemRequestMapper.toItemRequestDtoOut(itemRequestRepository.save(itemRequest));
+        return ItemRequestMapper.toItemRequestResponse(itemRequestRepository.save(itemRequest));
     }
 
-    private void setResponsesList(ItemRequestDtoOut irdo) {
+    private void setResponsesList(ItemRequestResponse irdo) {
         List<Item> itemsByRequestId = itemRepository.findByRequestIdOrderByRequestCreatedDesc(irdo.getId());
         irdo.setItems(ItemMapper.toItemDtoOutList(itemsByRequestId));
     }

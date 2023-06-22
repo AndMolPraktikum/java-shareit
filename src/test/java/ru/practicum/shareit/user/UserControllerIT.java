@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.dto.UserRequest;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -25,16 +25,16 @@ class UserControllerIT {
 
     @Test
     void shouldReturnTwoUsers() throws Exception {
-        UserDto userDto = new UserDto("user1", "user1@user.com");
+        UserRequest userRequest1 = new UserRequest("user1", "user1@user.com");
         mockMvc.perform(post("/users")
-                        .content(objectMapper.writeValueAsString(userDto))
+                        .content(objectMapper.writeValueAsString(userRequest1))
                         .contentType("application/json"))
                 .andExpect(status().isOk());
 
-        UserDto userDto2 = new UserDto("user2", "user2@user.com");
+        UserRequest userRequest2 = new UserRequest("user2", "user2@user.com");
 
         mockMvc.perform(post("/users")
-                        .content(objectMapper.writeValueAsString(userDto2))
+                        .content(objectMapper.writeValueAsString(userRequest2))
                         .contentType("application/json"))
                 .andExpect(status().isOk());
 
@@ -47,9 +47,9 @@ class UserControllerIT {
 
     @Test
     void shouldReturnUser() throws Exception {
-        UserDto user3Dto = new UserDto("user3", "use3@user.com");
+        UserRequest userRequest3 = new UserRequest("user3", "use3@user.com");
         String response = mockMvc.perform(post("/users")
-                        .content(objectMapper.writeValueAsString(user3Dto))
+                        .content(objectMapper.writeValueAsString(userRequest3))
                         .contentType("application/json"))
                 .andExpect(status().isOk())
                 .andReturn()
@@ -77,10 +77,10 @@ class UserControllerIT {
     @SneakyThrows
     @Test
     void shouldCreateUser() {
-        UserDto user4Dto = new UserDto("user4", "user4@user.com");
+        UserRequest userRequest4 = new UserRequest("user4", "user4@user.com");
 
         mockMvc.perform(post("/users")
-                        .content(objectMapper.writeValueAsString(user4Dto))
+                        .content(objectMapper.writeValueAsString(userRequest4))
                         .contentType("application/json"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/json;charset=UTF-8"))
@@ -89,25 +89,25 @@ class UserControllerIT {
 
     @Test
     void shouldNotCreateUserWithDuplicateEmail() throws Exception {
-        UserDto user5Dto = new UserDto("user5", "user5@user.com");
+        UserRequest userRequest5 = new UserRequest("user5", "user5@user.com");
         mockMvc.perform(post("/users")
-                        .content(objectMapper.writeValueAsString(user5Dto))
+                        .content(objectMapper.writeValueAsString(userRequest5))
                         .contentType("application/json"))
                 .andExpect(status().isOk());
 
-        UserDto userDto2 = new UserDto("user", "user5@user.com");
+        UserRequest userRequest51 = new UserRequest("user", "user5@user.com");
 
         mockMvc.perform(post("/users")
-                        .content(objectMapper.writeValueAsString(userDto2))
+                        .content(objectMapper.writeValueAsString(userRequest51))
                         .contentType("application/json"))
                 .andExpect(status().isInternalServerError());
     }
 
     @Test
     void shouldUpdateUser() throws Exception {
-        UserDto user6Dto = new UserDto("user6", "user6@user.com");
+        UserRequest userRequest6 = new UserRequest("user6", "user6@user.com");
         String response = mockMvc.perform(post("/users")
-                        .content(objectMapper.writeValueAsString(user6Dto))
+                        .content(objectMapper.writeValueAsString(userRequest6))
                         .contentType("application/json"))
                 .andExpect(status().isOk())
                 .andReturn()
@@ -116,10 +116,10 @@ class UserControllerIT {
 
         int id = Integer.parseInt(response.substring(6, 7));
 
-        UserDto userDto = new UserDto("update6", "update6@user.com");
+        UserRequest userRequestUpdate = new UserRequest("update6", "update6@user.com");
 
         mockMvc.perform(patch("/users/{id}", id)
-                        .content(objectMapper.writeValueAsString(userDto))
+                        .content(objectMapper.writeValueAsString(userRequestUpdate))
                         .contentType("application/json"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/json;charset=UTF-8"))
@@ -130,9 +130,9 @@ class UserControllerIT {
 
     @Test
     void shouldDeleteUser() throws Exception {
-        UserDto user7Dto = new UserDto("user7", "user7@user.com");
+        UserRequest userRequest7 = new UserRequest("user7", "user7@user.com");
         String response = mockMvc.perform(post("/users")
-                        .content(objectMapper.writeValueAsString(user7Dto))
+                        .content(objectMapper.writeValueAsString(userRequest7))
                         .contentType("application/json"))
                 .andExpect(status().isOk())
                 .andReturn()

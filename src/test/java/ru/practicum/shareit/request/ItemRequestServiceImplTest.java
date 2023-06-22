@@ -9,11 +9,11 @@ import org.springframework.data.domain.PageRequest;
 import ru.practicum.shareit.exception.ItemRequestNotFoundException;
 import ru.practicum.shareit.item.ItemRepository;
 import ru.practicum.shareit.mapper.ItemRequestMapper;
-import ru.practicum.shareit.request.dto.ItemRequestDtoIn;
-import ru.practicum.shareit.request.dto.ItemRequestDtoOut;
+import ru.practicum.shareit.request.dto.ItemRequestRequest;
+import ru.practicum.shareit.request.dto.ItemRequestResponse;
 import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.user.UserService;
-import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.dto.UserResponse;
 import ru.practicum.shareit.user.model.User;
 
 import java.time.LocalDateTime;
@@ -51,9 +51,9 @@ class ItemRequestServiceImplTest {
         when(userService.getUserById(userId)).thenReturn(null);
         when(itemRequestRepository.findAllByRequesterIdOrderByCreatedDesc(userId)).thenReturn(itemRequestList);
 
-        List<ItemRequestDtoOut> requestDtoOutList = itemRequestServiceImpl.getAllUserItemRequestDtoOut(userId);
+        List<ItemRequestResponse> requestDtoOutList = itemRequestServiceImpl.getAllUserItemRequest(userId);
 
-        assertEquals(ItemRequestMapper.toItemRequestDtoOutList(itemRequestList), requestDtoOutList);
+        assertEquals(ItemRequestMapper.toItemRequestResponseList(itemRequestList), requestDtoOutList);
         verify(userService).getUserById(userId);
         verify(itemRequestRepository).findAllByRequesterIdOrderByCreatedDesc(userId);
     }
@@ -70,9 +70,9 @@ class ItemRequestServiceImplTest {
         when(itemRequestRepository.findAllByRequesterIdNotOrderByCreatedDesc(any(PageRequest.class), eq(userId)))
                 .thenReturn(itemRequestList);
 
-        List<ItemRequestDtoOut> requestDtoOutList = itemRequestServiceImpl.getAllItemRequestDtoOut(userId, from, size);
+        List<ItemRequestResponse> requestDtoOutList = itemRequestServiceImpl.getAllItemRequest(userId, from, size);
 
-        assertEquals(ItemRequestMapper.toItemRequestDtoOutList(itemRequestList), requestDtoOutList);
+        assertEquals(ItemRequestMapper.toItemRequestResponseList(itemRequestList), requestDtoOutList);
         verify(userService).getUserById(userId);
         verify(itemRequestRepository).findAllByRequesterIdNotOrderByCreatedDesc(any(PageRequest.class), eq(userId));
     }
@@ -89,9 +89,9 @@ class ItemRequestServiceImplTest {
         when(itemRequestRepository.findAllByRequesterIdNotOrderByCreatedDesc(any(PageRequest.class), eq(userId)))
                 .thenReturn(itemRequestList);
 
-        List<ItemRequestDtoOut> requestDtoOutList = itemRequestServiceImpl.getAllItemRequestDtoOut(userId, from, size);
+        List<ItemRequestResponse> requestDtoOutList = itemRequestServiceImpl.getAllItemRequest(userId, from, size);
 
-        assertEquals(ItemRequestMapper.toItemRequestDtoOutList(itemRequestList), requestDtoOutList);
+        assertEquals(ItemRequestMapper.toItemRequestResponseList(itemRequestList), requestDtoOutList);
         verify(userService).getUserById(userId);
         verify(itemRequestRepository).findAllByRequesterIdNotOrderByCreatedDesc(any(PageRequest.class), eq(userId));
     }
@@ -124,15 +124,15 @@ class ItemRequestServiceImplTest {
         long userId = 1L;
         LocalDateTime localDateTime = LocalDateTime.now();
         ItemRequest itemRequest = new ItemRequest(1L, "Нужен аквариум", new User(), localDateTime);
-        ItemRequestDtoOut itemRequestDtoOut = new ItemRequestDtoOut(1L, "Нужен аквариум", new UserDto(),
+        ItemRequestResponse itemRequestResponse = new ItemRequestResponse(1L, "Нужен аквариум", new UserResponse(),
                 localDateTime, Collections.emptyList());
         when(userService.getUserById(userId)).thenReturn(new User());
         when(itemRequestRepository.findById(requestId)).thenReturn(Optional.of(itemRequest));
         when(itemRepository.findByRequestIdOrderByRequestCreatedDesc(anyLong())).thenReturn(Collections.emptyList());
 
-        ItemRequestDtoOut requestDtoOut = itemRequestServiceImpl.getItemRequestDtoOutById(requestId, userId);
+        ItemRequestResponse requestDtoOut = itemRequestServiceImpl.getItemRequestResponseById(requestId, userId);
 
-        assertEquals(itemRequestDtoOut, requestDtoOut);
+        assertEquals(itemRequestResponse, requestDtoOut);
         verify(userService).getUserById(userId);
         verify(itemRequestRepository).findById(requestId);
         verify(itemRepository).findByRequestIdOrderByRequestCreatedDesc(anyLong());
@@ -141,14 +141,14 @@ class ItemRequestServiceImplTest {
     @Test
     void create_whenUserExist_thenItemRequestCreated() {
         long userId = 1L;
-        ItemRequestDtoIn itemRequestDtoIn = new ItemRequestDtoIn("Нужен аквариум");
+        ItemRequestRequest itemRequestRequest = new ItemRequestRequest("Нужен аквариум");
         ItemRequest itemRequest = new ItemRequest(1L, "Нужен аквариум", new User(), LocalDateTime.now());
         when(userService.getUserById(userId)).thenReturn(new User());
         when(itemRequestRepository.save(any(ItemRequest.class))).thenReturn(itemRequest);
 
-        ItemRequestDtoOut requestDtoOut = itemRequestServiceImpl.create(userId, itemRequestDtoIn);
+        ItemRequestResponse requestDtoOut = itemRequestServiceImpl.createItemRequest(userId, itemRequestRequest);
 
-        assertEquals(ItemRequestMapper.toItemRequestDtoOut(itemRequest), requestDtoOut);
+        assertEquals(ItemRequestMapper.toItemRequestResponse(itemRequest), requestDtoOut);
         verify(userService).getUserById(userId);
         verify(itemRequestRepository).save(any(ItemRequest.class));
     }

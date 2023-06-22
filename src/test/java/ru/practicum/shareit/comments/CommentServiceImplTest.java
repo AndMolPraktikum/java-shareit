@@ -7,7 +7,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.model.Booking;
-import ru.practicum.shareit.comments.dto.CommentDto;
+import ru.practicum.shareit.comments.dto.CommentRequest;
+import ru.practicum.shareit.comments.dto.CommentResponse;
 import ru.practicum.shareit.comments.model.Comment;
 import ru.practicum.shareit.enums.BookingStatus;
 import ru.practicum.shareit.exception.NoCompletedBookingsException;
@@ -61,17 +62,17 @@ class CommentServiceImplTest {
                 new User(2L, "booker", "booker@yandex.ru"),
                 BookingStatus.APPROVED
         );
-        CommentDto commentDtoIn = new CommentDto("Комментарий к вещи 1");
-        Comment commentOut =
+        CommentRequest commentRequest = new CommentRequest("Комментарий к вещи 1");
+        Comment comment =
                 new Comment(1L, "Комментарий к вещи 1", item, user2, LocalDateTime.now());
         when(userService.getUserById(bookerId)).thenReturn(user);
         when(itemService.getItemById(itemId)).thenReturn(item);
         when(bookingRepository.findAllByBookerIdAndItemIdAndAfterEnd(bookerId, itemId)).thenReturn(List.of(booking));
-        when(commentRepository.save(any(Comment.class))).thenReturn(commentOut);
+        when(commentRepository.save(any(Comment.class))).thenReturn(comment);
 
-        CommentDto response = commentServiceImpl.create(itemId, bookerId, commentDtoIn);
+        CommentResponse response = commentServiceImpl.create(itemId, bookerId, commentRequest);
 
-        assertEquals(CommentMapper.toCommentDto(commentOut), response);
+        assertEquals(CommentMapper.toCommentResponse(comment), response);
         verify(userService).getUserById(bookerId);
         verify(itemService).getItemById(itemId);
         verify(bookingRepository).findAllByBookerIdAndItemIdAndAfterEnd(bookerId, itemId);
@@ -84,7 +85,7 @@ class CommentServiceImplTest {
         long bookerId = 2L;
         User user = new User(1L, "user", "user@yandex.ru");
         Item item = new Item(1L, "Кухонный комбайн", "Готовит сам", true, user, null);
-        CommentDto commentDtoIn = new CommentDto("Комментарий к вещи 1");
+        CommentRequest commentRequest = new CommentRequest("Комментарий к вещи 1");
 
         when(userService.getUserById(bookerId)).thenReturn(user);
         when(itemService.getItemById(itemId)).thenReturn(item);
@@ -92,7 +93,7 @@ class CommentServiceImplTest {
                 .thenReturn(Collections.emptyList());
 
         assertThrows(NoCompletedBookingsException.class,
-                () -> commentServiceImpl.create(itemId, bookerId, commentDtoIn));
+                () -> commentServiceImpl.create(itemId, bookerId, commentRequest));
 
         verify(userService).getUserById(bookerId);
         verify(itemService).getItemById(itemId);

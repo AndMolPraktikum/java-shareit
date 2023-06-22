@@ -5,8 +5,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import ru.practicum.shareit.request.dto.ItemRequestDtoIn;
-import ru.practicum.shareit.request.dto.ItemRequestDtoOut;
+import ru.practicum.shareit.request.dto.ItemRequestRequest;
+import ru.practicum.shareit.request.dto.ItemRequestResponse;
 
 import java.util.List;
 
@@ -26,13 +26,13 @@ class ItemRequestControllerTest {
     @Test
     void getAllUserItemRequest_whenUserIdIsCorrect_thenResponseContainsListOfItemRequests() {
         long userId = 1L;
-        List<ItemRequestDtoOut> itemRequestDtoOutList = List.of(new ItemRequestDtoOut(), new ItemRequestDtoOut());
-        when(itemRequestService.getAllUserItemRequestDtoOut(userId)).thenReturn(itemRequestDtoOutList);
+        List<ItemRequestResponse> itemRequestResponseList = List.of(new ItemRequestResponse(), new ItemRequestResponse());
+        when(itemRequestService.getAllUserItemRequest(userId)).thenReturn(itemRequestResponseList);
 
-        List<ItemRequestDtoOut> requestList = itemRequestController.getAllUserItemRequest(userId);
+        List<ItemRequestResponse> requestList = itemRequestController.getAllUserItemRequest(userId);
 
-        assertEquals(itemRequestDtoOutList, requestList);
-        verify(itemRequestService).getAllUserItemRequestDtoOut(userId);
+        assertEquals(itemRequestResponseList, requestList);
+        verify(itemRequestService).getAllUserItemRequest(userId);
     }
 
     @Test
@@ -40,39 +40,39 @@ class ItemRequestControllerTest {
         long userId = 1L;
         int from = 0;
         int size = 5;
-        List<ItemRequestDtoOut> itemRequestDtoOutList = List.of(new ItemRequestDtoOut(), new ItemRequestDtoOut());
-        when(itemRequestService.getAllItemRequestDtoOut(userId, from, size)).thenReturn(itemRequestDtoOutList);
+        List<ItemRequestResponse> itemRequestResponseList = List.of(new ItemRequestResponse(), new ItemRequestResponse());
+        when(itemRequestService.getAllItemRequest(userId, from, size)).thenReturn(itemRequestResponseList);
 
-        List<ItemRequestDtoOut> requestList = itemRequestController.getAllItemRequest(userId, from, size);
+        List<ItemRequestResponse> requestList = itemRequestController.getAllItemRequest(userId, from, size);
 
-        assertEquals(itemRequestDtoOutList, requestList);
-        verify(itemRequestService).getAllItemRequestDtoOut(userId, from, size);
+        assertEquals(itemRequestResponseList, requestList);
+        verify(itemRequestService).getAllItemRequest(userId, from, size);
     }
 
     @Test
     void getItemRequest_whenInvoked_thenResponseContainsItemRequest() {
         long userId = 1L;
         long requestId = 1L;
-        ItemRequestDtoOut itemRequestDto = new ItemRequestDtoOut();
-        when(itemRequestService.getItemRequestDtoOutById(requestId, userId)).thenReturn(itemRequestDto);
+        ItemRequestResponse itemRequestDto = new ItemRequestResponse();
+        when(itemRequestService.getItemRequestResponseById(requestId, userId)).thenReturn(itemRequestDto);
 
-        ItemRequestDtoOut requestDtoOut = itemRequestController.getItemRequest(userId, requestId);
+        ItemRequestResponse requestDtoOut = itemRequestController.getItemRequest(userId, requestId);
 
         assertEquals(itemRequestDto, requestDtoOut);
-        verify(itemRequestService).getItemRequestDtoOutById(requestId, userId);
+        verify(itemRequestService).getItemRequestResponseById(requestId, userId);
     }
 
     @Test
     void createItemRequest_whenInvoked_thenItemRequestCreated() {
         long userId = 1L;
-        ItemRequestDtoIn itemRequestDtoIn = new ItemRequestDtoIn();
-        ItemRequestDtoOut itemRequestDtoOut = new ItemRequestDtoOut();
+        ItemRequestRequest itemRequestRequest = new ItemRequestRequest();
+        ItemRequestResponse itemRequestResponse = new ItemRequestResponse();
 
-        when(itemRequestService.create(userId, itemRequestDtoIn)).thenReturn(itemRequestDtoOut);
+        when(itemRequestService.createItemRequest(userId, itemRequestRequest)).thenReturn(itemRequestResponse);
 
-        ItemRequestDtoOut requestDtoOut = itemRequestController.createItemRequest(itemRequestDtoIn, userId);
+        ItemRequestResponse requestDtoOut = itemRequestController.createItemRequest(itemRequestRequest, userId);
 
-        assertEquals(itemRequestDtoOut, requestDtoOut);
-        verify(itemRequestService).create(userId, itemRequestDtoIn);
+        assertEquals(itemRequestResponse, requestDtoOut);
+        verify(itemRequestService).createItemRequest(userId, itemRequestRequest);
     }
 }

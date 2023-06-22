@@ -7,7 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.model.Booking;
-import ru.practicum.shareit.comments.dto.CommentDto;
+import ru.practicum.shareit.comments.dto.CommentRequest;
+import ru.practicum.shareit.comments.dto.CommentResponse;
 import ru.practicum.shareit.comments.model.Comment;
 import ru.practicum.shareit.exception.NoCompletedBookingsException;
 import ru.practicum.shareit.item.ItemService;
@@ -39,15 +40,15 @@ public class CommentServiceImpl implements CommentService {
 
     @Transactional
     @Override
-    public CommentDto create(long itemId, long userId, CommentDto commentDto) {
-        Comment comment = CommentMapper.toCommentEntity(commentDto);
+    public CommentResponse create(long itemId, long userId, CommentRequest commentRequest) {
+        Comment comment = CommentMapper.toCommentEntity(commentRequest);
         User author = userService.getUserById(userId);
         Item item = itemService.getItemById(itemId);
 
         checkBookingItem(itemId, userId);
         comment.setAuthor(author);
         comment.setItem(item);
-        return CommentMapper.toCommentDto(commentRepository.save(comment));
+        return CommentMapper.toCommentResponse(commentRepository.save(comment));
     }
 
     private void checkBookingItem(long itemId, long userId) {

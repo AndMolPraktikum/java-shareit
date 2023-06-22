@@ -7,7 +7,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.practicum.shareit.exception.UserNotFoundException;
 import ru.practicum.shareit.mapper.UserMapper;
-import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.dto.UserRequest;
+import ru.practicum.shareit.user.dto.UserResponse;
 import ru.practicum.shareit.user.model.User;
 
 import java.util.List;
@@ -33,7 +34,7 @@ class UserServiceImplTest {
         List<User> userList = List.of(new User(), new User());
         when(userRepository.findAll()).thenReturn(userList);
 
-        List<UserDto> response = userServiceImpl.getAllUsersDto();
+        List<UserResponse> response = userServiceImpl.getAllUsers();
 
         assertEquals(userList.size(), response.size());
         verify(userRepository).findAll();
@@ -67,36 +68,37 @@ class UserServiceImplTest {
         User user = new User(1L, "user", "user@yandex.ru");
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
-        UserDto response = userServiceImpl.getUserDtoById(userId);
+        UserResponse response = userServiceImpl.getUserResponseById(userId);
 
-        assertEquals(UserMapper.toUserDto(user), response);
+        assertEquals(UserMapper.toUserResponse(user), response);
         verify(userRepository).findById(userId);
     }
 
     @Test
     void createUser_whenInvoked_thenUserCreate() {
-        UserDto userDto = new UserDto();
+        UserRequest userRequest = new UserRequest();
+        UserResponse userResponse = new UserResponse();
         User user = new User();
         when(userRepository.save(any(User.class))).thenReturn(user);
 
-        UserDto response = userServiceImpl.createUser(userDto);
+        UserResponse response = userServiceImpl.createUser(userRequest);
 
-        assertEquals(userDto, response);
+        assertEquals(userResponse, response);
         verify(userRepository).save(any(User.class));
     }
 
     @Test
     void updateUser_whenUserFound_thenUserUpdate() {
         long userId = 1L;
-        UserDto updateUserDto = new UserDto("user100", "user100@yandex.ru");
+        UserRequest userRequest = new UserRequest("user100", "user100@yandex.ru");
         User updateUser = new User(1L, "user1", "user1@yandex.ru");
         User updatedUser = new User(1L, "user100", "user100@yandex.ru");
         when(userRepository.findById(userId)).thenReturn(Optional.of(updateUser));
         when(userRepository.save(any(User.class))).thenReturn(updatedUser);
 
-        UserDto response = userServiceImpl.updateUser(userId, updateUserDto);
+        UserResponse response = userServiceImpl.updateUser(userId, userRequest);
 
-        assertEquals(UserMapper.toUserDto(updatedUser), response);
+        assertEquals(UserMapper.toUserResponse(updatedUser), response);
         verify(userRepository).findById(userId);
         verify(userRepository).save(any(User.class));
     }
@@ -104,15 +106,15 @@ class UserServiceImplTest {
     @Test
     void updateUser_whenUpdateIsEmpty_thenUserUpdate() {
         long userId = 1L;
-        UserDto updateUserDto = new UserDto(null, null);
+        UserRequest userRequest = new UserRequest(null, null);
         User updateUser = new User(1L, "user1", "user1@yandex.ru");
         User updatedUser = new User(1L, "user1", "user1@yandex.ru");
         when(userRepository.findById(userId)).thenReturn(Optional.of(updateUser));
         when(userRepository.save(any(User.class))).thenReturn(updateUser);
 
-        UserDto response = userServiceImpl.updateUser(userId, updateUserDto);
+        UserResponse response = userServiceImpl.updateUser(userId, userRequest);
 
-        assertEquals(UserMapper.toUserDto(updatedUser), response);
+        assertEquals(UserMapper.toUserResponse(updatedUser), response);
         verify(userRepository).findById(userId);
         verify(userRepository).save(any(User.class));
     }

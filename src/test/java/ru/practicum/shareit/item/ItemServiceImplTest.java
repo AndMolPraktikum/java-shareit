@@ -15,12 +15,12 @@ import ru.practicum.shareit.exception.UserHaveNoSuchItemException;
 import ru.practicum.shareit.item.dto.ItemDtoIn;
 import ru.practicum.shareit.item.dto.ItemDtoOut;
 import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.item.model.ItemWithBooking;
+import ru.practicum.shareit.mapper.BookingMapper;
 import ru.practicum.shareit.mapper.ItemMapper;
 import ru.practicum.shareit.request.ItemRequestService;
 import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.user.UserService;
-import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.dto.UserResponse;
 import ru.practicum.shareit.user.model.User;
 
 import java.time.LocalDateTime;
@@ -59,7 +59,7 @@ class ItemServiceImplTest {
     void getItemDtoByIdForAll_whenInvoked_thenResponseWithItemDtoOut() {
         long userId = 2L;
         long itemId = 1L;
-        ItemWithBooking itemOut = new ItemWithBooking(1L, "Садовая тачка",
+        ItemDtoOut itemOut = new ItemDtoOut(1L, "Садовая тачка",
                 "Возит сама", true, null, null, new ArrayList<>());
         User user = new User(1L, "user", "user@yandex.ru");
         Item item = new Item(1L, "Садовая тачка", "Возит сама", true, user, null);
@@ -68,7 +68,7 @@ class ItemServiceImplTest {
 
         ItemDtoOut response = itemServiceImpl.getItemDtoByIdForAll(itemId, userId);
 
-        assertEquals(ItemMapper.toItemWithBookingDto(itemOut), response);
+        assertEquals(itemOut, response);
         verify(commentRepository).findAllByItemId(itemId);
         verify(itemRepository).findById(itemId);
     }
@@ -79,7 +79,7 @@ class ItemServiceImplTest {
         long itemId = 1L;
         User user = new User(2L, "user", "user@yandex.ru");
         Item item = new Item(1L, "Садовая тачка", "Возит сама", true, user, null);
-        ItemWithBooking itemOut = new ItemWithBooking(1L, "Садовая тачка",
+        ItemDtoOut itemOut = new ItemDtoOut(1L, "Садовая тачка",
                 "Возит сама", true, null, null, new ArrayList<>());
 
         when(commentRepository.findAllByItemId(itemId)).thenReturn(Collections.emptyList());
@@ -89,7 +89,7 @@ class ItemServiceImplTest {
 
         ItemDtoOut response = itemServiceImpl.getItemDtoByIdForAll(itemId, userId);
 
-        assertEquals(ItemMapper.toItemWithBookingDto(itemOut), response);
+        assertEquals(itemOut, response);
         verify(commentRepository).findAllByItemId(itemId);
         verify(bookingRepository).findLastBookingForItem(itemId);
         verify(bookingRepository).findNextBookingForItem(itemId);
@@ -117,8 +117,15 @@ class ItemServiceImplTest {
         );
         User user = new User(2L, "user", "user@yandex.ru");
         Item item = new Item(1L, "Садовая тачка", "Возит сама", true, user, null);
-        ItemWithBooking itemOut = new ItemWithBooking(1L, "Садовая тачка",
-                "Возит сама", true, last, next, new ArrayList<>());
+        ItemDtoOut itemOut = new ItemDtoOut(
+                1L,
+                "Садовая тачка",
+                "Возит сама",
+                true,
+                BookingMapper.toBookingResponseShort(last),
+                BookingMapper.toBookingResponseShort(next),
+                new ArrayList<>()
+        );
         when(commentRepository.findAllByItemId(itemId)).thenReturn(Collections.emptyList());
         when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
         when(bookingRepository.findLastBookingForItem(itemId)).thenReturn(List.of(last));
@@ -126,7 +133,7 @@ class ItemServiceImplTest {
 
         ItemDtoOut response = itemServiceImpl.getItemDtoByIdForAll(itemId, userId);
 
-        assertEquals(ItemMapper.toItemWithBookingDto(itemOut), response);
+        assertEquals(itemOut, response);
         verify(commentRepository).findAllByItemId(itemId);
         verify(bookingRepository).findLastBookingForItem(itemId);
         verify(bookingRepository).findNextBookingForItem(itemId);
@@ -146,8 +153,14 @@ class ItemServiceImplTest {
         );
         User user = new User(2L, "user", "user@yandex.ru");
         Item item = new Item(1L, "Садовая тачка", "Возит сама", true, user, null);
-        ItemWithBooking itemOut = new ItemWithBooking(1L, "Садовая тачка",
-                "Возит сама", true, last, null, new ArrayList<>());
+        ItemDtoOut itemOut = new ItemDtoOut(
+                1L,
+                "Садовая тачка",
+                "Возит сама",
+                true,
+                BookingMapper.toBookingResponseShort(last),
+                null,
+                new ArrayList<>());
         when(commentRepository.findAllByItemId(itemId)).thenReturn(Collections.emptyList());
         when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
         when(bookingRepository.findLastBookingForItem(itemId)).thenReturn(List.of(last));
@@ -155,7 +168,7 @@ class ItemServiceImplTest {
 
         ItemDtoOut response = itemServiceImpl.getItemDtoByIdForAll(itemId, userId);
 
-        assertEquals(ItemMapper.toItemWithBookingDto(itemOut), response);
+        assertEquals(itemOut, response);
         verify(commentRepository).findAllByItemId(itemId);
         verify(bookingRepository).findLastBookingForItem(itemId);
         verify(bookingRepository).findNextBookingForItem(itemId);
@@ -283,14 +296,14 @@ class ItemServiceImplTest {
         Item updatedItem = new Item(1L, "Супер тачка",
                 "Теперь это робот", false, user, null);
 
-        when(userService.getUserDtoById(userId)).thenReturn(new UserDto());
+        when(userService.getUserResponseById(userId)).thenReturn(new UserResponse());
         when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
         when(itemRepository.save(item)).thenReturn(updatedItem);
 
         ItemDtoOut itemDtoOut = itemServiceImpl.updateItem(userId, itemId, updateItemDtoIn);
 
         assertEquals(ItemMapper.toItemDtoOut(item), itemDtoOut);
-        verify(userService).getUserDtoById(userId);
+        verify(userService).getUserResponseById(userId);
         verify(itemRepository).findById(itemId);
         verify(itemRepository).save(item);
     }
@@ -306,14 +319,14 @@ class ItemServiceImplTest {
         Item updatedItem = new Item(1L, "Садовая тачка",
                 "Возит сама", true, user, null);
 
-        when(userService.getUserDtoById(userId)).thenReturn(new UserDto());
+        when(userService.getUserResponseById(userId)).thenReturn(new UserResponse());
         when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
         when(itemRepository.save(item)).thenReturn(updatedItem);
 
         ItemDtoOut itemDtoOut = itemServiceImpl.updateItem(userId, itemId, updateItemDtoIn);
 
         assertEquals(ItemMapper.toItemDtoOut(item), itemDtoOut);
-        verify(userService).getUserDtoById(userId);
+        verify(userService).getUserResponseById(userId);
         verify(itemRepository).findById(itemId);
         verify(itemRepository).save(item);
     }
