@@ -3,12 +3,15 @@ package ru.practicum.shareit.booking;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.shareit.booking.dto.BookingRequestDto;
-import ru.practicum.shareit.booking.dto.BookingResponseDto;
+import ru.practicum.shareit.booking.dto.BookingRequest;
+import ru.practicum.shareit.booking.dto.BookingResponse;
+import ru.practicum.shareit.booking.model.BookingRequestParams;
 import ru.practicum.shareit.enums.States;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import java.util.List;
 
 
@@ -16,54 +19,63 @@ import java.util.List;
 @RequestMapping(path = "/bookings")
 @RequiredArgsConstructor
 @Slf4j
+@Validated
 public class BookingController {
 
     @Autowired
     private final BookingService bookingService;
 
     @GetMapping("/{bookingId}")
-    public BookingResponseDto getBookingById(@PathVariable long bookingId,
-                                             @RequestHeader("X-Sharer-User-Id") Long userId) {
+    public BookingResponse getBookingById(@PathVariable long bookingId,
+                                          @RequestHeader("X-Sharer-User-Id") Long userId) {
         log.info("Входящий запрос GET /bookings/{}. ID пользователя: {}", bookingId, userId);
-        final BookingResponseDto bookingResponseDto = bookingService.getBookingByIdForOwnerOrAuthor(bookingId, userId);
-        log.info("Исходящий ответ: {}", bookingResponseDto);
-        return bookingResponseDto;
+        final BookingResponse bookingResponse = bookingService.getBookingByIdForOwnerOrAuthor(bookingId, userId);
+        log.info("Исходящий ответ: {}", bookingResponse);
+        return bookingResponse;
     }
 
     @GetMapping
-    public List<BookingResponseDto> getAllUserBookings(@RequestParam(defaultValue = "ALL") States state,
-                                                       @RequestHeader("X-Sharer-User-Id") long userId) {
-        log.info("Входящий запрос GET /bookings?state={}. ID пользователя: {}", state, userId);
-        final List<BookingResponseDto> bookingResponseDtoList = bookingService.getAllUserBookings(userId, state);
-        log.info("Исходящий ответ: {}", bookingResponseDtoList);
-        return bookingResponseDtoList;
+    public List<BookingResponse> getAllUserBookings(@RequestParam(defaultValue = "ALL") States state,
+                                                    @RequestHeader("X-Sharer-User-Id") long userId,
+                                                    @RequestParam(defaultValue = "0") @Min(0) int from,
+                                                    @RequestParam(defaultValue = "5") @Min(1) int size) {
+        log.info("Входящий запрос GET /bookings?state={}from={}&size={}. ID пользователя: {}",
+                state, from, size, userId);
+        BookingRequestParams bookingRequestParams = new BookingRequestParams(state, userId, from, size);
+        final List<BookingResponse> bookingResponseList = bookingService.getAllUserBookings(bookingRequestParams);
+        log.info("Исходящий ответ: {}", bookingResponseList);
+        return bookingResponseList;
     }
 
     @GetMapping("/owner")
-    public List<BookingResponseDto> getAllOwnerBookings(@RequestParam(defaultValue = "ALL") States state,
-                                                        @RequestHeader("X-Sharer-User-Id") long userId) {
-        log.info("Входящий запрос GET /bookings/owner?state={}. ID владельца: {}", state, userId);
-        final List<BookingResponseDto> bookingResponseDtoList = bookingService.getAllOwnerBookings(userId, state);
-        log.info("Исходящий ответ: {}", bookingResponseDtoList);
-        return bookingResponseDtoList;
+    public List<BookingResponse> getAllOwnerBookings(@RequestParam(defaultValue = "ALL") States state,
+                                                     @RequestHeader("X-Sharer-User-Id") long userId,
+                                                     @RequestParam(defaultValue = "0") @Min(0) int from,
+                                                     @RequestParam(defaultValue = "5") @Min(1) int size) {
+        log.info("Входящий запрос GET /bookings/owner?state={}from={}&size={}. ID владельца: {}",
+                state, from, size, userId);
+        BookingRequestParams bookingRequestParams = new BookingRequestParams(state, userId, from, size);
+        final List<BookingResponse> bookingResponseList = bookingService.getAllOwnerBookings(bookingRequestParams);
+        log.info("Исходящий ответ: {}", bookingResponseList);
+        return bookingResponseList;
     }
 
     @PatchMapping("/{bookingId}")
-    public BookingResponseDto updateBookingStatus(@RequestParam boolean approved,
-                                                  @PathVariable long bookingId,
-                                                  @RequestHeader("X-Sharer-User-Id") long ownerId) {
+    public BookingResponse updateBookingStatus(@RequestParam boolean approved,
+                                               @PathVariable long bookingId,
+                                               @RequestHeader("X-Sharer-User-Id") long ownerId) {
         log.info("Входящий запрос GET /bookings/{}?approved={}. ID владельца: {}", bookingId, approved, ownerId);
-        final BookingResponseDto bookingResponseDto = bookingService.updateBookingStatus(bookingId, approved, ownerId);
-        log.info("Исходящий ответ: {}", bookingResponseDto);
-        return bookingResponseDto;
+        final BookingResponse bookingResponse = bookingService.updateBookingStatus(bookingId, approved, ownerId);
+        log.info("Исходящий ответ: {}", bookingResponse);
+        return bookingResponse;
     }
 
     @PostMapping
-    public BookingResponseDto createBooking(@RequestHeader("X-Sharer-User-Id") long userId,
-                                            @Valid @RequestBody BookingRequestDto bookingRequestDto) {
-        log.info("Входящий запрос POST /bookings. ID пользователя: {}.  BookingDto: {}", userId, bookingRequestDto);
-        BookingResponseDto responseDto = bookingService.create(bookingRequestDto, userId);
-        log.info("Исходящий ответ: {}", responseDto);
-        return responseDto;
+    public BookingResponse createBooking(@RequestHeader("X-Sharer-User-Id") long userId,
+                                         @Valid @RequestBody BookingRequest bookingRequest) {
+        log.info("Входящий запрос POST /bookings. ID пользователя: {}.  BookingRequest: {}", userId, bookingRequest);
+        BookingResponse response = bookingService.create(bookingRequest, userId);
+        log.info("Исходящий ответ: {}", response);
+        return response;
     }
 }

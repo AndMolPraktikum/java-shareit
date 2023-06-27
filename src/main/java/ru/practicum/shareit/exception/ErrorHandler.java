@@ -21,6 +21,12 @@ public class ErrorHandler {
         return new Response(String.format("%s %s", LocalDateTime.now(), e.getMessage()));
     }
 
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Response handleConstraintViolationException(final ConstraintViolationException e) {
+        log.info("400 {}", e.getMessage(), e);
+        return new Response(String.format("%s %s", LocalDateTime.now(), e.getMessage()));
+    }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -35,7 +41,6 @@ public class ErrorHandler {
         log.info("400 {}", e.getMessage(), e);
         return new Response(String.format("%s %s", LocalDateTime.now(), e.getMessage()));
     }
-
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -87,16 +92,9 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public Response handleUserAlreadyExistException(final UserAlreadyExistException e) {
-        log.info("409 {}", e.getMessage(), e);
-        return new Response(String.format("%s %s", LocalDateTime.now(), e.getMessage()));
-    }
-
-    @ExceptionHandler({ConstraintViolationException.class})
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public Response handleConstraintViolationException(final ConstraintViolationException e) {
-        log.info("409 {}", e.getMessage(), e);
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Response handleItemRequestNotFoundException(final ItemRequestNotFoundException e) {
+        log.info("404 {}", e.getMessage(), e);
         return new Response(String.format("%s %s", LocalDateTime.now(), e.getMessage()));
     }
 
@@ -113,6 +111,4 @@ public class ErrorHandler {
         log.info("500 {}", e.getMessage(), e);
         return new Response(String.format("%s %s", LocalDateTime.now(), e.getMessage()));
     }
-
-
 }

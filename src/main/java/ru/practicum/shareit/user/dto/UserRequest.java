@@ -10,17 +10,12 @@ import javax.validation.constraints.NotBlank;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserDto {
+public class UserRequest {
 
-    private Long id;
     @NotBlank
     private String name;
+
     @Email
     @NotBlank
     private String email;
-
-    public UserDto(String name, String email) {
-        this.name = name;
-        this.email = email;
-    }
 }
