@@ -21,7 +21,7 @@ public class ItemRequestControllerGateway {
     @Autowired
     private final ItemRequestClient itemRequestClient;
 
-    @GetMapping //ToDo проверить List
+    @GetMapping
     public ResponseEntity<Object> getAllUserItemRequest(@RequestHeader("X-Sharer-User-Id") Long userId) {
         log.info("Входящий запрос GET /requests. ID пользователя: {}.", userId);
         final ResponseEntity<Object> allUserItemRequest = itemRequestClient.getAllUserItemRequest(userId);
@@ -29,7 +29,7 @@ public class ItemRequestControllerGateway {
         return allUserItemRequest;
     }
 
-    @GetMapping("/all")  //ToDo проверить List
+    @GetMapping("/all")
     public ResponseEntity<Object> getAllItemRequest(@RequestHeader("X-Sharer-User-Id") Long userId,
                                                     @RequestParam(defaultValue = "0") @Min(0) int from,
                                                     @RequestParam(defaultValue = "5") @Min(1) int size) {

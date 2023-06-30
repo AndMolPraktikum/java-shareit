@@ -34,7 +34,7 @@ public class ItemControllerGateway {
         return itemDtoOut;
     }
 
-    @GetMapping  //ToDo Проверить отправку листа
+    @GetMapping
     public ResponseEntity<Object> findAllUserItems(@RequestHeader("X-Sharer-User-Id") Long userId,
                                              @RequestParam(defaultValue = "0") @Min(0) int from,
                                              @RequestParam(defaultValue = "10") @Min(1) int size) {
@@ -44,7 +44,7 @@ public class ItemControllerGateway {
         return allItemsResponseList;
     }
 
-    @GetMapping("/search")  //ToDo Проверить отправку листа
+    @GetMapping("/search")
     public ResponseEntity<Object> searchItemByText(@RequestHeader("X-Sharer-User-Id") Long userId,
                                              @RequestParam String text,
                                              @RequestParam(defaultValue = "0") @Min(0) int from,
@@ -56,9 +56,6 @@ public class ItemControllerGateway {
         return searchItemsResponseList;
     }
 
-    /*
-     * На вход поступает объект ItemDto
-     */
     @PostMapping
     public ResponseEntity<Object> createItem(@Valid @RequestBody GatewayItemDtoIn gatewayItemDtoIn,
                                  @RequestHeader("X-Sharer-User-Id") Long userId) {
@@ -68,7 +65,7 @@ public class ItemControllerGateway {
         return createdItem;
     }
 
-    @PostMapping("/{itemId}/comment") //ToDo проверить коммент
+    @PostMapping("/{itemId}/comment")
     public ResponseEntity<Object> createComment(@Valid @RequestBody GatewayCommentRequest commentRequest,
                                          @PathVariable long itemId,
                                          @RequestHeader("X-Sharer-User-Id") Long userId) {

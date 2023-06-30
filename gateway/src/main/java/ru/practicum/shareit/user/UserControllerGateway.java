@@ -19,7 +19,7 @@ public class UserControllerGateway {
     private final UserClient userClient;
 
     @GetMapping
-    public ResponseEntity<Object> getAllUsers() { //ToDo Проверить отправку листа
+    public ResponseEntity<Object> getAllUsers() {
         log.info("Входящий запрос GET /users.");
         final ResponseEntity<Object> userResponseList = userClient.getAllUsers();
         log.info("Исходящий ответ: {}", userResponseList);
